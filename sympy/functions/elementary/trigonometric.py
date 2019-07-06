@@ -2928,6 +2928,10 @@ class atan2(InverseTrigonometricFunction):
             return -S.ImaginaryUnit*log(
                 (x + S.ImaginaryUnit*y)/sqrt(x**2 + y**2))
 
+        # Check for the case atan(sin(x), cos(x)), fixes #6495
+        if isinstance(y, sin) and isinstance(x, cos) and y.args[0] == x.args[0]:
+            return -S.ImaginaryUnit*log(exp(S.ImaginaryUnit*x.args[0]))
+
     def _eval_rewrite_as_log(self, y, x, **kwargs):
         return -S.ImaginaryUnit*log((x + S.ImaginaryUnit*y) / sqrt(x**2 + y**2))
 

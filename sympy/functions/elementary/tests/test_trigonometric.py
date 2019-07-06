@@ -984,7 +984,7 @@ def test_atan2():
     y = Symbol('y', nonnegative=True)
     assert atan2(y, x) == atan(y/x) + pi
     y = Symbol('y')
-    assert atan2(y, x) == atan2(y, x, evaluate=False)
+    assert unchanged(atan2, y, x)
 
     u = Symbol("u", positive=True)
     assert atan2(0, u) == 0
@@ -1022,6 +1022,9 @@ def test_atan2():
 
     assert str(atan2(1, 2).evalf(5)) == '0.46365'
     raises(ArgumentIndexError, lambda: atan2(x, y).fdiff(3))
+
+    x = Symbol('x')
+    assert atan2(sin(x), cos(x)) == -I*log(exp(I*x))
 
 
 def test_acot():
