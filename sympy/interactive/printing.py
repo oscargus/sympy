@@ -11,7 +11,6 @@ from sympy import preview
 from sympy.core.compatibility import integer_types
 from sympy.utilities.misc import debug
 
-
 def _init_python_printing(stringify_func, **settings):
     """Setup printing in Python interactive session. """
     import sys
@@ -41,7 +40,15 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
         from IPython.lib.latextools import latex_to_png
     except ImportError:
         pass
+    from sympy.interactive.colorconversion import ColorTypes, convert_color_to
 
+    # Color representations that the different backends can use, it addition to
+    # named colors.
+    # Put gray at the end so that colors are not coverted to gray by mistake.
+    png_colors = [ColorTypes.rgb, ColorTypes.cmyk, ColorTypes.RGB,
+                  ColorTypes.HTML, ColorTypes.gray]
+    svg_colors = [ColorTypes.rgb, ColorTypes.cmyk, ColorTypes.gray]
+    # mpl_colors = [ColorTypes.rgbhex]
     preamble = "\\documentclass[varwidth,%s]{standalone}\n" \
                "\\usepackage{amsmath,amsfonts}%s\\begin{document}"
     if euler:
@@ -49,18 +56,20 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
     else:
         addpackages = ''
     if use_latex == "svg":
-        addpackages = addpackages + "\n\\special{color %s}" % forecolor
+        svg_color = convert_color_to(forecolor, svg_colors)
+        addpackages += "\n\\special{{color {}}}".format(svg_color)
 
     preamble = preamble % (fontsize, addpackages)
 
     imagesize = 'tight'
     offset = "0cm,0cm"
     resolution = round(150*scale)
-    dvi = r"-T %s -D %d -bg %s -fg %s -O %s" % (
-        imagesize, resolution, backcolor, forecolor, offset)
-    dvioptions = dvi.split()
+    dvioptions = ["-T", imagesize, "-O", offset, "-D", str(resolution),
+                  "-bg", convert_color_to(backcolor, png_colors),
+                  "-fg", convert_color_to(forecolor, png_colors)]
 
-    svg_scale = 2.1*scale
+
+    svg_scale = 150/72*scale
     dvioptions_svg = ["--no-fonts", "--scale={}".format(svg_scale)]
 
     debug("init_printing: DVIOPTIONS:", dvioptions)
@@ -110,6 +119,7 @@ def _init_ipython_printing(ip, stringify_func, use_latex, euler, forecolor,
         # mathtext can't render some LaTeX commands. For example, it can't
         # render any LaTeX environments such as array or matrix. So here we
         # ensure that if mathtext fails to render, we return None.
+        # mpl_color = convert_color_to(forecolor, mpl_colors)
         try:
             return latex_to_png(o)
         except ValueError as e:
