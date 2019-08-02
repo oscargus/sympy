@@ -1,7 +1,7 @@
-from sympy.utilities.pytest import XFAIL, raises, warns_deprecated_sympy
+from sympy.utilities.pytest import XFAIL, raises, warns_deprecated_sympy, slow
 from sympy import (S, Symbol, symbols, nan, oo, I, pi, Float, And, Or,
     Not, Implies, Xor, zoo, sqrt, Rational, simplify, Function,
-    log, cos, sin, Add, floor, ceiling, trigsimp)
+    log, cos, sin, Add, floor, ceiling, trigsimp, Min, Max)
 from sympy.core.compatibility import range
 from sympy.core.relational import (Relational, Equality, Unequality,
                                    GreaterThan, LessThan, StrictGreaterThan,
@@ -918,3 +918,31 @@ def test_trigsimp():
     assert changed.subs(x, pi/8) is S.true
     # or an evaluated one
     assert trigsimp(Eq(cos(x)**2 + sin(x)**2, 1)) is S.true
+
+
+def test_minmax_simplification():
+    x, y, z = symbols('x y z')
+    assert (Min(x, y, z) >= z).simplify() == (z <= Min(x, y))
+    assert (Max(x, y, z) >= z).simplify() is S.true
+    assert (Eq(Min(x, y, z), z)).simplify() == (z <= Min(x, y))
+    assert (Ne(Max(x, y, z), z)).simplify() == (z < Max(x, y))
+
+
+@slow
+def test_minmax_simplification_slow():
+    # Test min/max simplification systematically
+    x, y = symbols('x y')
+    for v1 in [-2, -1, 0, 1, 2]:
+        for v2 in [-2, -1, 0, 1, 2]:
+            for rel in [Eq, Ne, Ge, Gt, Le, Lt]:
+                for minmax in [Min, Max]:
+                    f = rel(minmax(x, y), x)
+                    f2 = f.simplify()
+                    if isinstance(f2, Relational):
+                        f2 = f2.subs([(x, v1), (y, v2)])
+                    assert f2 == f.subs([(x, v1), (y, v2)])
+                    f = rel(x, minmax(y, x))
+                    f2 = f.simplify()
+                    if isinstance(f2, Relational):
+                        f2 = f2.subs([(x, v1), (y, v2)])
+                    assert f2 == f.subs([(x, v1), (y, v2)])
