@@ -121,6 +121,9 @@ class re(Function):
         if self.args[0].is_finite:
             return True
 
+    def _eval_rewrite_as_Piecewise(self, arg, **kwargs):
+        return Piecewise((arg, Eq(im(arg), 0)), (0, Eq(re(arg), 0)), (re(arg), True))
+
     def _sage_(self):
         import sage.all as sage
         return sage.real_part(self.args[0]._sage_())
@@ -224,6 +227,9 @@ class im(Function):
 
     def _eval_rewrite_as_re(self, arg, **kwargs):
         return -S.ImaginaryUnit*(self.args[0] - re(self.args[0]))
+
+    def _eval_rewrite_as_Piecewise(self, arg, **kwargs):
+        return Piecewise((-arg*I, Eq(re(arg), 0)), (0, Eq(im(arg), 0)), (im(arg), True))
 
     def _eval_is_algebraic(self):
         return self.args[0].is_algebraic
@@ -386,8 +392,7 @@ class sign(Function):
         return sage.sgn(self.args[0]._sage_())
 
     def _eval_rewrite_as_Piecewise(self, arg, **kwargs):
-        if arg.is_extended_real:
-            return Piecewise((1, arg > 0), (-1, arg < 0), (0, True))
+        return Piecewise((Piecewise((1, arg > 0), (-1, arg < 0), (0, True)), Eq(im(arg), 0)), (sign(arg), True))
 
     def _eval_rewrite_as_Heaviside(self, arg, **kwargs):
         from sympy.functions.special.delta_functions import Heaviside
@@ -611,8 +616,7 @@ class Abs(Function):
             return arg*(Heaviside(arg) - Heaviside(-arg))
 
     def _eval_rewrite_as_Piecewise(self, arg, **kwargs):
-        if arg.is_extended_real:
-            return Piecewise((arg, arg >= 0), (-arg, True))
+        return Piecewise((Piecewise((arg, arg >= 0), (-arg, True)), Eq(im(arg), 0)), (Abs(arg), True))
 
     def _eval_rewrite_as_sign(self, arg, **kwargs):
         return arg/sign(arg)
