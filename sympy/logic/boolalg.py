@@ -221,6 +221,9 @@ class BooleanAtom(Boolean):
     __ge__ = __lt__
     # \\\
 
+    def _eval_simplify(self, **kwargs):
+        return self
+
 
 class BooleanTrue(with_metaclass(Singleton, BooleanAtom)):
     """
@@ -555,7 +558,7 @@ class BooleanFunction(Application, Boolean):
                            binary=True)
         if len(Rel) <= 1:
             return rv
-        Rel, nonRealRel = sift(rv.args, lambda i: all(s.is_real is not False
+        Rel, nonRealRel = sift(Rel, lambda i: all(s.is_real is not False
                                                       for s in i.free_symbols),
                                binary=True)
         Rel = [i.canonical for i in Rel]
@@ -694,8 +697,8 @@ class And(LatticeOp, BooleanFunction):
         if not Rel:
             return rv
         eqs, other = sift(Rel, lambda i: isinstance(i, Equality), binary=True)
-        if not eqs:
-            return rv
+        #if not eqs:
+        #    return rv
 
         measure, ratio = kwargs['measure'], kwargs['ratio']
         reps = {}
@@ -2545,12 +2548,12 @@ def simplify_patterns_and():
                      (And(Le(a, b), Ne(a, b)), Lt(a, b)),
                      (And(Lt(a, b), Ne(a, b)), Lt(a, b)),
                      # Min/max
-                     (And(Ge(a, b), Ge(a, c)), Ge(a, Max(b, c))),
-                     (And(Ge(a, b), Gt(a, c)), ITE(b > c, Ge(a, b), Gt(a, c))),
-                     (And(Gt(a, b), Gt(a, c)), Gt(a, Max(b, c))),
-                     (And(Le(a, b), Le(a, c)), Le(a, Min(b, c))),
-                     (And(Le(a, b), Lt(a, c)), ITE(b < c, Le(a, b), Lt(a, c))),
-                     (And(Lt(a, b), Lt(a, c)), Lt(a, Min(b, c))),
+                     #(And(Ge(a, b), Ge(a, c)), Ge(a, Max(b, c))),
+                     #(And(Ge(a, b), Gt(a, c)), ITE(b > c, Ge(a, b), Gt(a, c))),
+                     #(And(Gt(a, b), Gt(a, c)), Gt(a, Max(b, c))),
+                     #(And(Le(a, b), Le(a, c)), Le(a, Min(b, c))),
+                     #(And(Le(a, b), Lt(a, c)), ITE(b < c, Le(a, b), Lt(a, c))),
+                     #(And(Lt(a, b), Lt(a, c)), Lt(a, Min(b, c))),
                      # Sign
                      (And(Eq(a, b), Eq(a, -b)), And(Eq(a, S(0)), Eq(b, S(0)))),
                      )
@@ -2579,12 +2582,12 @@ def simplify_patterns_or():
                     (Or(Le(a, b), Ne(a, b)), S.true),
                     (Or(Lt(a, b), Ne(a, b)), Ne(a, b)),
                     # Min/max
-                    (Or(Ge(a, b), Ge(a, c)), Ge(a, Min(b, c))),
-                    (Or(Ge(a, b), Gt(a, c)), ITE(b > c, Gt(a, c), Ge(a, b))),
-                    (Or(Gt(a, b), Gt(a, c)), Gt(a, Min(b, c))),
-                    (Or(Le(a, b), Le(a, c)), Le(a, Max(b, c))),
-                    (Or(Le(a, b), Lt(a, c)), ITE(b >= c, Le(a, b), Lt(a, c))),
-                    (Or(Lt(a, b), Lt(a, c)), Lt(a, Max(b, c))),
+                    #(Or(Ge(a, b), Ge(a, c)), Ge(a, Min(b, c))),
+                    #(Or(Ge(a, b), Gt(a, c)), ITE(b > c, Gt(a, c), Ge(a, b))),
+                    #(Or(Gt(a, b), Gt(a, c)), Gt(a, Min(b, c))),
+                    #(Or(Le(a, b), Le(a, c)), Le(a, Max(b, c))),
+                    #(Or(Le(a, b), Lt(a, c)), ITE(b >= c, Le(a, b), Lt(a, c))),
+                    #(Or(Lt(a, b), Lt(a, c)), Lt(a, Max(b, c))),
                     )
     return _matchers_or
 
