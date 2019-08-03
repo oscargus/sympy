@@ -521,8 +521,7 @@ class BooleanFunction(Application, Boolean):
     def _apply_patternbased_simplification(self, rv, patterns, measure,
                                            dominatingvalue,
                                            replacementvalue=None,
-                                           threeterm_patterns=None,
-                                           minmax=None):
+                                           threeterm_patterns=None):
         """
         Replace patterns of Relational
 
@@ -568,11 +567,10 @@ class BooleanFunction(Application, Boolean):
         if threeterm_patterns:
             Rel = self._apply_patternbased_threeterm_simplification(Rel,
                                 threeterm_patterns, rv.func, dominatingvalue,
-                                replacementvalue, measure, minmax=minmax)
+                                replacementvalue, measure)
 
         Rel = self._apply_patternbased_twoterm_simplification(Rel, patterns,
-                        rv.func, dominatingvalue, replacementvalue, measure,
-                        minmax=minmax)
+                        rv.func, dominatingvalue, replacementvalue, measure)
 
         rv = rv.func(*([_canonical(i) for i in ordered(Rel)]
                      + nonRel + nonRealRel))
@@ -581,7 +579,7 @@ class BooleanFunction(Application, Boolean):
     def _apply_patternbased_twoterm_simplification(self, Rel, patterns, func,
                                                    dominatingvalue,
                                                    replacementvalue,
-                                                   measure, minmax=None):
+                                                   measure):
         from sympy.functions.elementary.miscellaneous import Min, Max
         changed = True
         while changed and len(Rel) >= 2:
@@ -626,7 +624,7 @@ class BooleanFunction(Application, Boolean):
                                 # will be replacementvalue
                                 return [replacementvalue]
                             # add replacement
-                            if not isinstance(np, ITE) and (minmax or not np.has(Min, Max)):
+                            if not isinstance(np, ITE) and not np.has(Min, Max):
                                 # We only want to use ITE and Min/Max replacements if
                                 # they simplify to a relational
                                 costsaving = measure(func(*oldexpr.args)) - measure(np)
@@ -661,7 +659,6 @@ class BooleanFunction(Application, Boolean):
                                                      measure, minmax=None):
         from sympy.functions.elementary.miscellaneous import Min, Max
         changed = True
-
         while changed and len(Rel) >= 3:
             changed = False
             # Sort based on ordered
@@ -726,7 +723,7 @@ class BooleanFunction(Application, Boolean):
                                 # will be replacementvalue
                                 return [replacementvalue]
                             # add replacement
-                            if not isinstance(np, ITE) and (minmax or np.has(Min, Max)):
+                            if not isinstance(np, ITE) and not np.has(Min, Max):
                                 # We only want to use ITE and Min/Max replacements if
                                 # they simplify to a relational
                                 costsaving = measure(func(*oldexpr.args)) - measure(np)
@@ -866,11 +863,9 @@ class And(LatticeOp, BooleanFunction):
         rv = rv.func(*([i.canonical for i in (eqs + other)] + nonRel))
         patterns = simplify_patterns_and()
         threeterm_patterns = simplify_patterns_and3()
-        minmax = kwargs.get('relational_minmax', None)
         return self._apply_patternbased_simplification(rv, patterns,
                                                        measure, S.false,
-                                                       threeterm_patterns=threeterm_patterns,
-                                                       minmax=minmax)
+                                                       threeterm_patterns=threeterm_patterns)
 
     def _eval_as_set(self):
         from sympy.sets.sets import Intersection
@@ -941,9 +936,8 @@ class Or(LatticeOp, BooleanFunction):
         if not isinstance(rv, Or):
             return rv
         patterns = simplify_patterns_or()
-        minmax = kwargs.get('relational_minmax', None)
         return self._apply_patternbased_simplification(rv, patterns,
-            kwargs['measure'], S.true, minmax=minmax)
+            kwargs['measure'], S.true)
 
 
 class Not(BooleanFunction):
@@ -1188,9 +1182,8 @@ class Xor(BooleanFunction):
         if not isinstance(rv, Xor):  # This shouldn't really happen here
             return rv
         patterns = simplify_patterns_xor()
-        minmax = kwargs.get('relational_minmax', None)
         return self._apply_patternbased_simplification(rv, patterns,
-            kwargs['measure'], None, minmax=minmax)
+            kwargs['measure'], None)
 
 
 class Nand(BooleanFunction):
@@ -2710,7 +2703,7 @@ def simplify_patterns_and():
                      )
     return _matchers_and
 
-def simplify_patterns_and3(include_minmax=False):
+def simplify_patterns_and3():
     from sympy.functions.elementary.miscellaneous import Min, Max
     from sympy.core import Wild
     from sympy.core.relational import Eq, Ne, Ge, Gt, Le, Lt
