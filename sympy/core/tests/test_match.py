@@ -687,3 +687,10 @@ def test_gh_issue_2711():
     assert f.find(a + b) == \
         {meijerg(((), ()), ((S.Zero,), ()), x), x, S.Zero}
     assert f.find(a**2) == {meijerg(((), ()), ((S.Zero,), ()), x), x}
+
+
+def test_issue_17354():
+    from sympy import symbols, Wild
+    x, y = symbols("x y", real=True)
+    a, b = symbols("a b", cls=Wild)
+    assert ((0 <= x).reversed | (y <= x)).match((1/a <= b) | (a <= b)) in None
