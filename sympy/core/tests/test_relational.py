@@ -6,7 +6,7 @@ from sympy.core.compatibility import range
 from sympy.core.relational import (Relational, Equality, Unequality,
                                    GreaterThan, LessThan, StrictGreaterThan,
                                    StrictLessThan, Rel, Eq, Lt, Le,
-                                   Gt, Ge, Ne)
+                                   Gt, Ge, Ne, InvalidComparison)
 from sympy.sets.sets import Interval, FiniteSet
 
 from itertools import combinations
@@ -22,10 +22,10 @@ def rel_check(a, b):
             v = [(a == b), (a != b)]
             assert len(set(v)) == 1 and v[0] == False
             assert not (a != b) and not (a == b)
-            assert raises(TypeError, lambda: a < b)
-            assert raises(TypeError, lambda: a <= b)
-            assert raises(TypeError, lambda: a > b)
-            assert raises(TypeError, lambda: a >= b)
+            assert raises(InvalidComparison, lambda: a < b)
+            assert raises(InvalidComparison, lambda: a <= b)
+            assert raises(InvalidComparison, lambda: a > b)
+            assert raises(InvalidComparison, lambda: a >= b)
         else:
             E = [(a == b), (a != b)]
             assert len(set(E)) == 2
@@ -175,10 +175,10 @@ def test_bool():
     assert Ge(1, 1) is S.true
     assert Eq(I, 2) is S.false
     assert Ne(I, 2) is S.true
-    raises(TypeError, lambda: Gt(I, 2))
-    raises(TypeError, lambda: Ge(I, 2))
-    raises(TypeError, lambda: Lt(I, 2))
-    raises(TypeError, lambda: Le(I, 2))
+    raises(InvalidComparison, lambda: Gt(I, 2))
+    raises(InvalidComparison, lambda: Ge(I, 2))
+    raises(InvalidComparison, lambda: Lt(I, 2))
+    raises(InvalidComparison, lambda: Le(I, 2))
     a = Float('.000000000000000000001', '')
     b = Float('.0000000000000000000001', '')
     assert Eq(pi + a, pi + b) is S.false
@@ -383,15 +383,15 @@ def test_evaluate():
     assert str(Lt(x, x, evaluate=False)) == 'x < x'
 
 
-def assert_all_ineq_raise_TypeError(a, b):
-    raises(TypeError, lambda: a > b)
-    raises(TypeError, lambda: a >= b)
-    raises(TypeError, lambda: a < b)
-    raises(TypeError, lambda: a <= b)
-    raises(TypeError, lambda: b > a)
-    raises(TypeError, lambda: b >= a)
-    raises(TypeError, lambda: b < a)
-    raises(TypeError, lambda: b <= a)
+def assert_all_ineq_raise_InvalidComparison(a, b):
+    raises(InvalidComparison, lambda: a > b)
+    raises(InvalidComparison, lambda: a >= b)
+    raises(InvalidComparison, lambda: a < b)
+    raises(InvalidComparison, lambda: a <= b)
+    raises(InvalidComparison, lambda: b > a)
+    raises(InvalidComparison, lambda: b >= a)
+    raises(InvalidComparison, lambda: b < a)
+    raises(InvalidComparison, lambda: b <= a)
 
 
 def assert_all_ineq_give_class_Inequality(a, b):
@@ -407,9 +407,9 @@ def assert_all_ineq_give_class_Inequality(a, b):
     assert isinstance(b <= a, Inequality)
 
 
-def test_imaginary_compare_raises_TypeError():
+def test_imaginary_compare_raises_InvalidComparison():
     # See issue #5724
-    assert_all_ineq_raise_TypeError(I, x)
+    assert_all_ineq_raise_InvalidComparison(I, x)
 
 
 def test_complex_compare_not_real():
@@ -417,7 +417,7 @@ def test_complex_compare_not_real():
     y = Symbol('y', imaginary=True)
     z = Symbol('z', complex=True, extended_real=False)
     for w in (y, z):
-        assert_all_ineq_raise_TypeError(2, w)
+        assert_all_ineq_raise_InvalidComparison(2, w)
     # some cases which should remain un-evaluated
     t = Symbol('t')
     x = Symbol('x', real=True)
@@ -426,24 +426,24 @@ def test_complex_compare_not_real():
         assert_all_ineq_give_class_Inequality(2, w)
 
 
-def test_imaginary_and_inf_compare_raises_TypeError():
+def test_imaginary_and_inf_compare_raises_InvalidComparison():
     # See pull request #7835
     y = Symbol('y', imaginary=True)
-    assert_all_ineq_raise_TypeError(oo, y)
-    assert_all_ineq_raise_TypeError(-oo, y)
+    assert_all_ineq_raise_InvalidComparison(oo, y)
+    assert_all_ineq_raise_InvalidComparison(-oo, y)
 
 
 def test_complex_pure_imag_not_ordered():
-    raises(TypeError, lambda: 2*I < 3*I)
+    raises(InvalidComparison, lambda: 2*I < 3*I)
 
     # more generally
     x = Symbol('x', real=True, nonzero=True)
     y = Symbol('y', imaginary=True)
     z = Symbol('z', complex=True)
-    assert_all_ineq_raise_TypeError(I, y)
+    assert_all_ineq_raise_InvalidComparison(I, y)
 
     t = I*x   # an imaginary number, should raise errors
-    assert_all_ineq_raise_TypeError(2, t)
+    assert_all_ineq_raise_InvalidComparison(2, t)
 
     t = -I*y   # a real number, so no errors
     assert_all_ineq_give_class_Inequality(2, t)
@@ -459,25 +459,25 @@ def test_x_minus_y_not_same_as_x_lt_y():
     """
     x = I + 2
     y = I + 3
-    raises(TypeError, lambda: x < y)
+    raises(InvalidComparison, lambda: x < y)
     assert x - y < 0
 
     ineq = Lt(x, y, evaluate=False)
-    raises(TypeError, lambda: ineq.doit())
+    raises(InvalidComparison, lambda: ineq.doit())
     assert ineq.lhs - ineq.rhs < 0
 
     t = Symbol('t', imaginary=True)
     x = 2 + t
     y = 3 + t
     ineq = Lt(x, y, evaluate=False)
-    raises(TypeError, lambda: ineq.doit())
+    raises(InvalidComparison, lambda: ineq.doit())
     assert ineq.lhs - ineq.rhs < 0
 
     # this one should give error either way
     x = I + 2
     y = 2*I + 3
-    raises(TypeError, lambda: x < y)
-    raises(TypeError, lambda: x - y < 0)
+    raises(InvalidComparison, lambda: x < y)
+    raises(InvalidComparison, lambda: x - y < 0)
 
 
 def test_nan_equality_exceptions():
@@ -498,21 +498,21 @@ def test_nan_inequality_raise_errors():
     # See discussion in pull request #7776.  We test inequalities with
     # a set including examples of various classes.
     for q in (x, S(0), S(10), S(1)/3, pi, S(1.3), oo, -oo, nan):
-        assert_all_ineq_raise_TypeError(q, nan)
+        assert_all_ineq_raise_InvalidComparison(q, nan)
 
 
 def test_nan_complex_inequalities():
     # Comparisons of NaN with non-real raise errors, we're not too
     # fussy whether its the NaN error or complex error.
     for r in (I, zoo, Symbol('z', imaginary=True)):
-        assert_all_ineq_raise_TypeError(r, nan)
+        assert_all_ineq_raise_InvalidComparison(r, nan)
 
 
 def test_complex_infinity_inequalities():
-    raises(TypeError, lambda: zoo > 0)
-    raises(TypeError, lambda: zoo >= 0)
-    raises(TypeError, lambda: zoo < 0)
-    raises(TypeError, lambda: zoo <= 0)
+    raises(InvalidComparison, lambda: zoo > 0)
+    raises(InvalidComparison, lambda: zoo >= 0)
+    raises(InvalidComparison, lambda: zoo < 0)
+    raises(InvalidComparison, lambda: zoo <= 0)
 
 
 def test_inequalities_symbol_name_same():
@@ -546,14 +546,14 @@ def test_inequalities_symbol_name_same_complex():
     """
     # FIXME: could replace with random selection after test passes
     for a in (x, S(0), S(1)/3, pi, oo):
-        raises(TypeError, lambda: Gt(a, I))
-        raises(TypeError, lambda: a > I)
-        raises(TypeError, lambda: Lt(a, I))
-        raises(TypeError, lambda: a < I)
-        raises(TypeError, lambda: Ge(a, I))
-        raises(TypeError, lambda: a >= I)
-        raises(TypeError, lambda: Le(a, I))
-        raises(TypeError, lambda: a <= I)
+        raises(InvalidComparison, lambda: Gt(a, I))
+        raises(InvalidComparison, lambda: a > I)
+        raises(InvalidComparison, lambda: Lt(a, I))
+        raises(InvalidComparison, lambda: a < I)
+        raises(InvalidComparison, lambda: Ge(a, I))
+        raises(InvalidComparison, lambda: a >= I)
+        raises(InvalidComparison, lambda: Le(a, I))
+        raises(InvalidComparison, lambda: a <= I)
 
 
 def test_inequalities_cant_sympify_other():
@@ -564,7 +564,7 @@ def test_inequalities_cant_sympify_other():
 
     for a in (x, S(0), S(1)/3, pi, I, zoo, oo, -oo, nan):
         for op in (lt, gt, le, ge):
-            raises(TypeError, lambda: op(a, bar))
+            raises(InvalidComparison, lambda: op(a, bar))
 
 
 def test_ineq_avoid_wild_symbol_flip():

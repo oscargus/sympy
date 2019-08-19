@@ -330,16 +330,16 @@ class Expr(Basic, EvalfMixin):
         return complex(float(re), float(im))
 
     def __ge__(self, other):
-        from sympy import GreaterThan
+        from .relational import GreaterThan, InvalidComparison
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s >= %s" % (self, other))
+            raise InvalidComparison("Invalid comparison %s >= %s" % (self, other))
         for me in (self, other):
             if me.is_complex and me.is_extended_real is False:
-                raise TypeError("Invalid comparison of complex %s" % me)
+                raise InvalidComparison("Invalid comparison of complex %s" % me)
             if me is S.NaN:
-                raise TypeError("Invalid NaN comparison")
+                raise InvalidComparison("Invalid NaN comparison")
         n2 = _n2(self, other)
         if n2 is not None:
             return _sympify(n2 >= 0)
@@ -353,16 +353,16 @@ class Expr(Basic, EvalfMixin):
         return GreaterThan(self, other, evaluate=False)
 
     def __le__(self, other):
-        from sympy import LessThan
+        from .relational import LessThan, InvalidComparison
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s <= %s" % (self, other))
+            raise InvalidComparison("Invalid comparison %s <= %s" % (self, other))
         for me in (self, other):
             if me.is_complex and me.is_extended_real is False:
-                raise TypeError("Invalid comparison of complex %s" % me)
+                raise InvalidComparison("Invalid comparison of complex %s" % me)
             if me is S.NaN:
-                raise TypeError("Invalid NaN comparison")
+                raise InvalidComparison("Invalid NaN comparison")
         n2 = _n2(self, other)
         if n2 is not None:
             return _sympify(n2 <= 0)
@@ -376,16 +376,16 @@ class Expr(Basic, EvalfMixin):
         return LessThan(self, other, evaluate=False)
 
     def __gt__(self, other):
-        from sympy import StrictGreaterThan
+        from .relational import StrictGreaterThan, InvalidComparison
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s > %s" % (self, other))
+            raise InvalidComparison("Invalid comparison %s > %s" % (self, other))
         for me in (self, other):
             if me.is_complex and me.is_extended_real is False:
-                raise TypeError("Invalid comparison of complex %s" % me)
+                raise InvalidComparison("Invalid comparison of complex %s" % me)
             if me is S.NaN:
-                raise TypeError("Invalid NaN comparison")
+                raise InvalidComparison("Invalid NaN comparison")
         n2 = _n2(self, other)
         if n2 is not None:
             return _sympify(n2 > 0)
@@ -400,16 +400,16 @@ class Expr(Basic, EvalfMixin):
         return StrictGreaterThan(self, other, evaluate=False)
 
     def __lt__(self, other):
-        from sympy import StrictLessThan
+        from .relational import StrictLessThan, InvalidComparison
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s < %s" % (self, other))
+            raise InvalidComparison("Invalid comparison %s < %s" % (self, other))
         for me in (self, other):
             if me.is_complex and me.is_extended_real is False:
-                raise TypeError("Invalid comparison of complex %s" % me)
+                raise InvalidComparison("Invalid comparison of complex %s" % me)
             if me is S.NaN:
-                raise TypeError("Invalid NaN comparison")
+                raise InvalidComparison("Invalid NaN comparison")
         n2 = _n2(self, other)
         if n2 is not None:
             return _sympify(n2 < 0)
@@ -668,6 +668,7 @@ class Expr(Basic, EvalfMixin):
         # try numerical evaluation to see if we get two different values
         failing_number = None
         if wrt == free:
+            from .relational import InvalidComparison
             # try 0 (for a) and 1 (for b)
             try:
                 a = expr.subs(list(zip(free, [0]*len(free))),
@@ -675,7 +676,7 @@ class Expr(Basic, EvalfMixin):
                 if a.has(S.NaN):
                     # evaluation may succeed when substitution fails
                     a = expr._random(None, 0, 0, 0, 0)
-            except ZeroDivisionError:
+            except (ZeroDivisionError, InvalidComparison, ValueError):
                 a = None
             if a is not None and not a.has(S.NaN):
                 try:
@@ -684,7 +685,7 @@ class Expr(Basic, EvalfMixin):
                     if b.has(S.NaN):
                         # evaluation may succeed when substitution fails
                         b = expr._random(None, 1, 0, 1, 0)
-                except ZeroDivisionError:
+                except (ZeroDivisionError, InvalidComparison, ValueError):
                     b = None
                 if b is not None and not b.has(S.NaN) and b.equals(a) is False:
                     return False
@@ -732,11 +733,11 @@ class Expr(Basic, EvalfMixin):
         used to return True or False.
 
         """
-        from sympy.simplify.simplify import nsimplify, simplify
-        from sympy.solvers.solveset import solveset
-        from sympy.solvers.solvers import solve
-        from sympy.polys.polyerrors import NotAlgebraic
+        from .relational import InvalidComparison
         from sympy.polys.numberfields import minimal_polynomial
+        from sympy.polys.polyerrors import NotAlgebraic
+        from sympy.simplify.simplify import nsimplify, simplify
+        from sympy.solvers.solvers import solve
 
         other = sympify(other)
         if self == other:
@@ -746,7 +747,10 @@ class Expr(Basic, EvalfMixin):
         # don't worry about doing simplification steps one at a time
         # because if the expression ever goes to 0 then the subsequent
         # simplification steps that are done will be very fast.
-        diff = factor_terms(simplify(self - other), radical=True)
+        try:
+            diff = factor_terms(simplify(self - other), radical=True)
+        except InvalidComparison:
+            return False
 
         if not diff:
             return True

@@ -628,9 +628,10 @@ class Piecewise(Function):
                     # within an And or an Or
                     rv = S.false
                 elif rv.rel_op == '!=':
+                    from sympy.core.relational import InvalidComparison
                     try:
                         rv = Or(sym < rv.rhs, sym > rv.rhs)
-                    except TypeError:
+                    except InvalidComparison:
                         # e.g. x != I ==> all real x satisfy
                         rv = S.true
             elif rv == (S.NegativeInfinity < sym) & (sym < S.Infinity):

@@ -5,7 +5,7 @@ from __future__ import print_function, division
 from sympy.core import Symbol, Dummy, sympify
 from sympy.core.compatibility import iterable
 from sympy.core.exprtools import factor_terms
-from sympy.core.relational import Relational, Eq, Ge, Lt
+from sympy.core.relational import Relational, Eq, Ge, Lt, InvalidComparison
 from sympy.sets import Interval
 from sympy.sets.sets import FiniteSet, Union, EmptySet, Intersection
 from sympy.core.singleton import S
@@ -471,8 +471,8 @@ def solve_univariate_inequality(expr, gen, relational=True, domain=S.Reals, cont
         gen = Dummy('gen', extended_real=True)
         try:
             expr = expr.xreplace({_gen: gen})
-        except TypeError:
-            raise TypeError(filldedent('''
+        except InvalidComparison:
+            raise InvalidComparison(filldedent('''
                 When gen is real, the relational has a complex part
                 which leads to an invalid comparison like I < 0.
                 '''))
@@ -548,7 +548,7 @@ def solve_univariate_inequality(expr, gen, relational=True, domain=S.Reals, cont
                 v = expanded_e.subs(gen, expand_mul(x))
                 try:
                     r = expr.func(v, 0)
-                except TypeError:
+                except InvalidComparison:
                     r = S.false
                 if r in (S.true, S.false):
                     return r
@@ -806,7 +806,7 @@ def _solve_inequality(ie, s, linear=False):
             elif v not in (True, False):
                 return
             return v
-        except TypeError:
+        except InvalidComparison:
             return S.NaN
 
     rv = None

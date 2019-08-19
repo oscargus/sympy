@@ -323,10 +323,11 @@ def sympify(a, locals=None, convert_xor=True, strict=False, rational=False,
                 return Array(a.flat, a.shape)  # works with e.g. NumPy arrays
 
     if not isinstance(a, string_types):
+        from .relational import InvalidComparison
         for coerce in (float, int):
             try:
                 coerced = coerce(a)
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, InvalidComparison):
                 continue
             # XXX: AttributeError only needed here for Py2
             except AttributeError:

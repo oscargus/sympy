@@ -34,6 +34,7 @@ from sympy.core.add import Add
 from sympy.core.mul import Mul
 from sympy.core.compatibility import range
 from sympy.core.cache import cacheit
+from sympy.core.relational import InvalidComparison
 from sympy.core.symbol import Dummy, Wild
 from sympy.simplify import hyperexpand, powdenest, collect
 from sympy.simplify.fu import sincos_to_sum
@@ -1053,7 +1054,7 @@ def _check_antecedents(g1, g2, x):
     try:
         lambda_c = (q - p)*abs(omega)**(1/(q - p))*cos(psi) \
             + (v - u)*abs(sigma)**(1/(v - u))*cos(theta)
-        # the TypeError might be raised here, e.g. if lambda_c is NaN
+        # InvalidComparison might be raised here, e.g. if lambda_c is NaN
         if _eval_cond(lambda_c > 0) != False:
             c15 = (lambda_c > 0)
         else:
@@ -1072,7 +1073,7 @@ def _check_antecedents(g1, g2, x):
                    And(Eq(lambda_c, 0), Ne(lambda_s, 0), re(eta) > -1),
                    And(Eq(lambda_c, 0), Eq(lambda_s, 0), re(eta) > 0)]
             c15 = Or(*tmp)
-    except TypeError:
+    except InvalidComparison:
         c15 = False
     for cond, i in [(c1, 1), (c2, 2), (c3, 3), (c4, 4), (c5, 5), (c6, 6),
                     (c7, 7), (c8, 8), (c9, 9), (c10, 10), (c11, 11),

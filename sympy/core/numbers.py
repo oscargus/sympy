@@ -780,7 +780,8 @@ class Number(AtomicExpr):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s < %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s < %s" % (self, other))
         raise NotImplementedError('%s needs .__lt__() method' %
             (self.__class__.__name__))
 
@@ -788,7 +789,8 @@ class Number(AtomicExpr):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s <= %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s <= %s" % (self, other))
         raise NotImplementedError('%s needs .__le__() method' %
             (self.__class__.__name__))
 
@@ -796,14 +798,16 @@ class Number(AtomicExpr):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s > %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s > %s" % (self, other))
         return _sympify(other).__lt__(self)
 
     def __ge__(self, other):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s >= %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s >= %s" % (self, other))
         return _sympify(other).__le__(self)
 
     def __hash__(self):
@@ -1424,7 +1428,8 @@ class Float(Number):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s > %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s > %s" % (self, other))
         if other.is_Rational:
             # test self*other.q <?> other.p without losing precision
             '''
@@ -1919,7 +1924,8 @@ class Rational(Number):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s > %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s > %s" % (self, other))
         if other.is_Number:
             op = None
             s, o = self, other
@@ -2255,7 +2261,8 @@ class Integer(Rational):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s > %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s > %s" % (self, other))
         if other.is_Integer:
             return _sympify(self.p > other.p)
         return Rational.__gt__(self, other)
@@ -2264,7 +2271,8 @@ class Integer(Rational):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s < %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s < %s" % (self, other))
         if other.is_Integer:
             return _sympify(self.p < other.p)
         return Rational.__lt__(self, other)
@@ -2273,7 +2281,8 @@ class Integer(Rational):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s >= %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s >= %s" % (self, other))
         if other.is_Integer:
             return _sympify(self.p >= other.p)
         return Rational.__ge__(self, other)
@@ -2282,7 +2291,8 @@ class Integer(Rational):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s <= %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s <= %s" % (self, other))
         if other.is_Integer:
             return _sympify(self.p <= other.p)
         return Rational.__le__(self, other)
@@ -2946,7 +2956,8 @@ class Infinity(with_metaclass(Singleton, Number)):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s < %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s < %s" % (self, other))
         if other.is_extended_real:
             return S.false
         return Expr.__lt__(self, other)
@@ -2955,7 +2966,8 @@ class Infinity(with_metaclass(Singleton, Number)):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s <= %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s <= %s" % (self, other))
         if other.is_infinite and other.is_extended_positive:
             return S.true
         elif other.is_real or other.is_extended_nonpositive:
@@ -2966,7 +2978,8 @@ class Infinity(with_metaclass(Singleton, Number)):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s > %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s > %s" % (self, other))
         if other.is_infinite and other.is_extended_positive:
             return S.false
         elif other.is_real or other.is_extended_nonpositive:
@@ -2977,7 +2990,8 @@ class Infinity(with_metaclass(Singleton, Number)):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s >= %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s >= %s" % (self, other))
         if other.is_extended_real:
             return S.true
         return Expr.__ge__(self, other)
@@ -3136,7 +3150,8 @@ class NegativeInfinity(with_metaclass(Singleton, Number)):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s < %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s < %s" % (self, other))
         if other.is_infinite and other.is_extended_negative:
             return S.false
         elif other.is_real or other.is_extended_nonnegative:
@@ -3147,7 +3162,8 @@ class NegativeInfinity(with_metaclass(Singleton, Number)):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s <= %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s <= %s" % (self, other))
         if other.is_extended_real:
             return S.true
         return Expr.__le__(self, other)
@@ -3156,7 +3172,8 @@ class NegativeInfinity(with_metaclass(Singleton, Number)):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s > %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s > %s" % (self, other))
         if other.is_extended_real:
             return S.false
         return Expr.__gt__(self, other)
@@ -3165,7 +3182,8 @@ class NegativeInfinity(with_metaclass(Singleton, Number)):
         try:
             other = _sympify(other)
         except SympifyError:
-            raise TypeError("Invalid comparison %s >= %s" % (self, other))
+            from .relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison %s >= %s" % (self, other))
         if other.is_infinite and other.is_extended_negative:
             return S.true
         elif other.is_real or other.is_extended_nonnegative:

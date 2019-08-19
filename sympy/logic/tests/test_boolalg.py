@@ -1,6 +1,6 @@
 from sympy.assumptions.ask import Q
 from sympy.core.numbers import oo
-from sympy.core.relational import Equality, Eq, Ne
+from sympy.core.relational import Equality, Eq, Ne, InvalidComparison
 from sympy.core.singleton import S
 from sympy.core.symbol import (Dummy, symbols)
 from sympy.functions import Piecewise
@@ -1074,7 +1074,7 @@ def test_relational_simplification_patterns_numerically():
                     # throw an exception here if the first argument is zero
                     try:
                         originalvalue = original.subs(sublist)
-                    except TypeError:
+                    except InvalidComparison:
                         continue
                 else:
                     originalvalue = original.subs(sublist)

@@ -7,6 +7,7 @@ from sympy import (Symbol, Set, Union, Interval, oo, S, sympify, nan,
 from mpmath import mpi
 
 from sympy.core.compatibility import range
+from sympy.core.relational import InvalidComparison
 from sympy.utilities.pytest import raises, XFAIL
 
 from sympy.abc import x, y, z, m, n
@@ -1032,10 +1033,10 @@ def test_issue_9447():
 def test_issue_10337():
     assert (FiniteSet(2) == 3) is False
     assert (FiniteSet(2) != 3) is True
-    raises(TypeError, lambda: FiniteSet(2) < 3)
-    raises(TypeError, lambda: FiniteSet(2) <= 3)
-    raises(TypeError, lambda: FiniteSet(2) > 3)
-    raises(TypeError, lambda: FiniteSet(2) >= 3)
+    raises(InvalidComparison, lambda: FiniteSet(2) < 3)
+    raises(InvalidComparison, lambda: FiniteSet(2) <= 3)
+    raises(InvalidComparison, lambda: FiniteSet(2) > 3)
+    raises(InvalidComparison, lambda: FiniteSet(2) >= 3)
 
 
 def test_issue_10326():

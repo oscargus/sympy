@@ -26,7 +26,7 @@ from sympy.core.function import (expand_mul, expand_log,
                           Function, expand_power_exp, Lambda, _mexpand, expand)
 from sympy.integrals.integrals import Integral
 from sympy.core.numbers import ilcm, Float, Rational
-from sympy.core.relational import Relational, Ge
+from sympy.core.relational import Relational, Ge, InvalidComparison
 from sympy.core.logic import fuzzy_not, fuzzy_and
 from sympy.core.power import integer_log
 from sympy.logic.boolalg import And, Or, BooleanAtom
@@ -1494,7 +1494,7 @@ def _solve(f, *symbols, **flags):
                     if _eval_simpify is not None:
                         # unconditionally take the simpification of v
                         v = _eval_simpify(ratio=2, measure=lambda x: 1)
-                except TypeError:
+                except InvalidComparison:
                     # incompatible type with condition(s)
                     continue
                 if v == False:

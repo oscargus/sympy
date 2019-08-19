@@ -6,6 +6,7 @@ from sympy.core.containers import Tuple
 from sympy.core.expr import Expr
 from sympy.core.function import Lambda
 from sympy.core.logic import fuzzy_bool
+from sympy.core.relational import InvalidComparison
 from sympy.core.symbol import Symbol, Dummy
 from sympy.logic.boolalg import And, as_Boolean
 from sympy.sets.contains import Contains
@@ -179,7 +180,7 @@ class ConditionSet(Set):
         d = Dummy()
         try:
             return self.as_relational(d).subs(d, other)
-        except TypeError:
+        except InvalidComparison:
             # couldn't do the substitution without error
             return False
 

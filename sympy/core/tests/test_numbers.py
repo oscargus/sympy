@@ -13,6 +13,7 @@ from sympy.core.logic import fuzzy_not
 from sympy.core.numbers import (igcd, ilcm, igcdex, seterr,
     igcd2, igcd_lehmer, mpf_norm, comp, mod_inverse)
 from sympy.core.power import integer_nthroot, isqrt, integer_log
+from sympy.core.relational import InvalidComparison
 from sympy.polys.domains.groundtypes import PythonRational
 from sympy.utilities.decorator import conserve_mpmath_dps
 from sympy.utilities.iterables import permutations
@@ -381,10 +382,10 @@ def test_Number_cmp():
     assert n2 > n3
     assert n2 >= n3
 
-    raises(TypeError, lambda: n1 < S.NaN)
-    raises(TypeError, lambda: n1 <= S.NaN)
-    raises(TypeError, lambda: n1 > S.NaN)
-    raises(TypeError, lambda: n1 >= S.NaN)
+    raises(InvalidComparison, lambda: n1 < S.NaN)
+    raises(InvalidComparison, lambda: n1 <= S.NaN)
+    raises(InvalidComparison, lambda: n1 > S.NaN)
+    raises(InvalidComparison, lambda: n1 >= S.NaN)
 
 
 def test_Rational_cmp():
@@ -413,10 +414,10 @@ def test_Rational_cmp():
     assert not (Rational(-1) > 0)
     assert Rational(-1) < 0
 
-    raises(TypeError, lambda: n1 < S.NaN)
-    raises(TypeError, lambda: n1 <= S.NaN)
-    raises(TypeError, lambda: n1 > S.NaN)
-    raises(TypeError, lambda: n1 >= S.NaN)
+    raises(InvalidComparison, lambda: n1 < S.NaN)
+    raises(InvalidComparison, lambda: n1 <= S.NaN)
+    raises(InvalidComparison, lambda: n1 > S.NaN)
+    raises(InvalidComparison, lambda: n1 >= S.NaN)
 
 
 def test_Float():
@@ -858,23 +859,23 @@ def test_Infinity_inequations():
     assert not (_inf < pi)
     assert exp(-3) < _inf
 
-    raises(TypeError, lambda: oo < I)
-    raises(TypeError, lambda: oo <= I)
-    raises(TypeError, lambda: oo > I)
-    raises(TypeError, lambda: oo >= I)
-    raises(TypeError, lambda: -oo < I)
-    raises(TypeError, lambda: -oo <= I)
-    raises(TypeError, lambda: -oo > I)
-    raises(TypeError, lambda: -oo >= I)
+    raises(InvalidComparison, lambda: oo < I)
+    raises(InvalidComparison, lambda: oo <= I)
+    raises(InvalidComparison, lambda: oo > I)
+    raises(InvalidComparison, lambda: oo >= I)
+    raises(InvalidComparison, lambda: -oo < I)
+    raises(InvalidComparison, lambda: -oo <= I)
+    raises(InvalidComparison, lambda: -oo > I)
+    raises(InvalidComparison, lambda: -oo >= I)
 
-    raises(TypeError, lambda: I < oo)
-    raises(TypeError, lambda: I <= oo)
-    raises(TypeError, lambda: I > oo)
-    raises(TypeError, lambda: I >= oo)
-    raises(TypeError, lambda: I < -oo)
-    raises(TypeError, lambda: I <= -oo)
-    raises(TypeError, lambda: I > -oo)
-    raises(TypeError, lambda: I >= -oo)
+    raises(InvalidComparison, lambda: I < oo)
+    raises(InvalidComparison, lambda: I <= oo)
+    raises(InvalidComparison, lambda: I > oo)
+    raises(InvalidComparison, lambda: I >= oo)
+    raises(InvalidComparison, lambda: I < -oo)
+    raises(InvalidComparison, lambda: I <= -oo)
+    raises(InvalidComparison, lambda: I > -oo)
+    raises(InvalidComparison, lambda: I >= -oo)
 
     assert oo > -oo and oo >= -oo
     assert (oo < -oo) == False and (oo <= -oo) == False
@@ -915,14 +916,14 @@ def test_NaN():
     assert nan + nan is nan
     assert -nan + nan*(-5) is nan
     assert 8/nan is nan
-    raises(TypeError, lambda: nan > 0)
-    raises(TypeError, lambda: nan < 0)
-    raises(TypeError, lambda: nan >= 0)
-    raises(TypeError, lambda: nan <= 0)
-    raises(TypeError, lambda: 0 < nan)
-    raises(TypeError, lambda: 0 > nan)
-    raises(TypeError, lambda: 0 <= nan)
-    raises(TypeError, lambda: 0 >= nan)
+    raises(InvalidComparison, lambda: nan > 0)
+    raises(InvalidComparison, lambda: nan < 0)
+    raises(InvalidComparison, lambda: nan >= 0)
+    raises(InvalidComparison, lambda: nan <= 0)
+    raises(InvalidComparison, lambda: 0 < nan)
+    raises(InvalidComparison, lambda: 0 > nan)
+    raises(InvalidComparison, lambda: 0 <= nan)
+    raises(InvalidComparison, lambda: 0 >= nan)
     assert nan**0 == 1  # as per IEEE 754
     assert 1**nan is nan # IEEE 754 is not the best choice for symbolic work
     # test Pow._eval_power's handling of NaN
@@ -1897,14 +1898,14 @@ def test_comparisons_with_unknown_type():
         assert foo != n
         assert not n == foo
         assert not foo == n
-        raises(TypeError, lambda: n < foo)
-        raises(TypeError, lambda: foo > n)
-        raises(TypeError, lambda: n > foo)
-        raises(TypeError, lambda: foo < n)
-        raises(TypeError, lambda: n <= foo)
-        raises(TypeError, lambda: foo >= n)
-        raises(TypeError, lambda: n >= foo)
-        raises(TypeError, lambda: foo <= n)
+        raises(InvalidComparison, lambda: n < foo)
+        raises(InvalidComparison, lambda: foo > n)
+        raises(InvalidComparison, lambda: n > foo)
+        raises(InvalidComparison, lambda: foo < n)
+        raises(InvalidComparison, lambda: n <= foo)
+        raises(InvalidComparison, lambda: foo >= n)
+        raises(InvalidComparison, lambda: n >= foo)
+        raises(InvalidComparison, lambda: foo <= n)
 
     class Bar(object):
         """
@@ -1938,14 +1939,14 @@ def test_comparisons_with_unknown_type():
         assert not bar == n
 
     for n in ni, nf, nr, oo, -oo, zoo, nan:
-        raises(TypeError, lambda: n < bar)
-        raises(TypeError, lambda: bar > n)
-        raises(TypeError, lambda: n > bar)
-        raises(TypeError, lambda: bar < n)
-        raises(TypeError, lambda: n <= bar)
-        raises(TypeError, lambda: bar >= n)
-        raises(TypeError, lambda: n >= bar)
-        raises(TypeError, lambda: bar <= n)
+        raises(InvalidComparison, lambda: n < bar)
+        raises(InvalidComparison, lambda: bar > n)
+        raises(InvalidComparison, lambda: n > bar)
+        raises(InvalidComparison, lambda: bar < n)
+        raises(InvalidComparison, lambda: n <= bar)
+        raises(InvalidComparison, lambda: bar >= n)
+        raises(InvalidComparison, lambda: n >= bar)
+        raises(InvalidComparison, lambda: bar <= n)
 
 def test_NumberSymbol_comparison():
     from sympy.core.tests.test_relational import rel_check
@@ -2014,11 +2015,11 @@ def test_NegativeInfinity():
     assert((-oo)**12 == oo)
 
 def test_issue_6133():
-    raises(TypeError, lambda: (-oo < None))
-    raises(TypeError, lambda: (S(-2) < None))
-    raises(TypeError, lambda: (oo < None))
-    raises(TypeError, lambda: (oo > None))
-    raises(TypeError, lambda: (S(2) < None))
+    raises(InvalidComparison, lambda: (-oo < None))
+    raises(InvalidComparison, lambda: (S(-2) < None))
+    raises(InvalidComparison, lambda: (oo < None))
+    raises(InvalidComparison, lambda: (oo > None))
+    raises(InvalidComparison, lambda: (S(2) < None))
 
 def test_abc():
     x = numbers.Float(5)

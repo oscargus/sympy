@@ -5,8 +5,8 @@ from __future__ import print_function, division
 from sympy.core import S
 from sympy.core.compatibility import reduce, range, iterable
 from sympy.core.function import Function
-from sympy.core.relational import _canonical, Ge, Gt
 from sympy.core.numbers import oo
+from sympy.core.relational import _canonical, Ge, Gt, InvalidComparison
 from sympy.core.symbol import Dummy
 from sympy.integrals import integrate, Integral
 from sympy.integrals.meijerint import _dummy
@@ -932,7 +932,7 @@ def _simplifyconds(expr, s, a):
                 return False
             if n < 0 and (abs(ex1) >= abs(a)**n) == True:
                 return True
-        except TypeError:
+        except InvalidComparison:
             pass
 
     def replie(x, y):

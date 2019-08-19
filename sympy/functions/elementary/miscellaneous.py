@@ -11,7 +11,7 @@ from sympy.core.mod import Mod
 from sympy.core.mul import Mul
 from sympy.core.numbers import Rational
 from sympy.core.power import Pow
-from sympy.core.relational import Eq, Relational
+from sympy.core.relational import Eq, Relational, InvalidComparison
 from sympy.core.singleton import Singleton
 from sympy.core.symbol import Dummy
 from sympy.core.rules import Transform
@@ -519,7 +519,7 @@ class MinMaxBase(Expr, LatticeOp):
             if not isinstance(arg, Expr) or arg.is_extended_real is False or (
                     arg.is_number and
                     not arg.is_comparable):
-                raise ValueError("The argument '%s' is not comparable." % arg)
+                raise InvalidComparison("The argument '%s' is not comparable." % arg)
 
             if arg == cls.zero:
                 raise ShortCircuit(arg)

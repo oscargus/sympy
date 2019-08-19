@@ -4,6 +4,7 @@ from sympy.core.basic import Basic
 from sympy.core.compatibility import iterable
 from sympy.core.expr import AtomicExpr, Expr
 from sympy.core.numbers import _sympifyit, oo
+from sympy.core.relational import InvalidComparison
 from sympy.core.sympify import _sympify
 from sympy.functions.elementary.miscellaneous import Min, Max
 from sympy.logic.boolalg import And
@@ -1380,7 +1381,7 @@ class AccumulationBounds(AtomicExpr):
             if self.min >= other.max:
                 return False
         elif not other.is_extended_real:
-            raise TypeError(
+            raise InvalidComparison(
                 "Invalid comparison of %s %s" %
                 (type(other), other))
         elif other.is_comparable:
@@ -1417,7 +1418,7 @@ class AccumulationBounds(AtomicExpr):
             if self.min > other.max:
                 return False
         elif not other.is_extended_real:
-            raise TypeError(
+            raise InvalidComparison(
                 "Invalid comparison of %s %s" %
                 (type(other), other))
         elif other.is_comparable:
@@ -1454,7 +1455,7 @@ class AccumulationBounds(AtomicExpr):
             if self.max <= other.min:
                 return False
         elif not other.is_extended_real:
-            raise TypeError(
+            raise InvalidComparison(
                 "Invalid comparison of %s %s" %
                 (type(other), other))
         elif other.is_comparable:
@@ -1491,7 +1492,7 @@ class AccumulationBounds(AtomicExpr):
             if self.max < other.min:
                 return False
         elif not other.is_extended_real:
-            raise TypeError(
+            raise InvalidComparison(
                 "Invalid comparison of %s %s" %
                 (type(other), other))
         elif other.is_comparable:

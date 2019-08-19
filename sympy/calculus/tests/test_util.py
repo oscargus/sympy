@@ -5,6 +5,7 @@ from sympy.calculus.util import (function_range, continuous_domain, not_empty_in
                                  periodicity, lcim, AccumBounds, is_convex,
                                  stationary_points, minimum, maximum)
 from sympy.core import Add, Mul, Pow
+from sympy.core.relational import InvalidComparison
 from sympy.sets.sets import (Interval, FiniteSet, EmptySet, Complement,
                             Union)
 from sympy.utilities.pytest import raises
@@ -488,10 +489,10 @@ def test_comparison_AccumBounds():
     assert (cos(x) > 0).subs(x, oo) == (AccumBounds(-1, 1) > 0)
 
     c = Symbol('c')
-    raises(TypeError, lambda: (AccumBounds(0, 1) < c))
-    raises(TypeError, lambda: (AccumBounds(0, 1) <= c))
-    raises(TypeError, lambda: (AccumBounds(0, 1) > c))
-    raises(TypeError, lambda: (AccumBounds(0, 1) >= c))
+    raises(InvalidComparison, lambda: (AccumBounds(0, 1) < c))
+    raises(InvalidComparison, lambda: (AccumBounds(0, 1) <= c))
+    raises(InvalidComparison, lambda: (AccumBounds(0, 1) > c))
+    raises(InvalidComparison, lambda: (AccumBounds(0, 1) >= c))
 
 
 def test_contains_AccumBounds():

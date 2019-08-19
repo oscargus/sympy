@@ -16,7 +16,7 @@ from sympy.core.logic import fuzzy_bool, fuzzy_or
 from sympy.core.mul import Mul
 from sympy.core.numbers import Float
 from sympy.core.operations import LatticeOp
-from sympy.core.relational import Eq, Ne
+from sympy.core.relational import Eq, Ne, InvalidComparison
 from sympy.core.singleton import Singleton, S
 from sympy.core.symbol import Symbol, Dummy, _uniquely_named_symbol
 from sympy.core.sympify import _sympify, sympify, converter
@@ -1166,7 +1166,7 @@ class Union(Set, LatticeOp, EvalfMixin):
                     for i in self.args):
                 return r
             return b
-        except (TypeError, NotImplementedError):
+        except (InvalidComparison, NotImplementedError):
             return Or(*[s.contains(other) for s in self.args])
 
     def as_relational(self, symbol):
@@ -1709,22 +1709,26 @@ class FiniteSet(Set, EvalfMixin):
 
     def __ge__(self, other):
         if not isinstance(other, Set):
-            raise TypeError("Invalid comparison of set with %s" % func_name(other))
+            from sympy.core.relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison of set with %s" % func_name(other))
         return other.is_subset(self)
 
     def __gt__(self, other):
         if not isinstance(other, Set):
-            raise TypeError("Invalid comparison of set with %s" % func_name(other))
+            from sympy.core.relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison of set with %s" % func_name(other))
         return self.is_proper_superset(other)
 
     def __le__(self, other):
         if not isinstance(other, Set):
-            raise TypeError("Invalid comparison of set with %s" % func_name(other))
+            from sympy.core.relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison of set with %s" % func_name(other))
         return self.is_subset(other)
 
     def __lt__(self, other):
         if not isinstance(other, Set):
-            raise TypeError("Invalid comparison of set with %s" % func_name(other))
+            from sympy.core.relational import InvalidComparison
+            raise InvalidComparison("Invalid comparison of set with %s" % func_name(other))
         return self.is_proper_subset(other)
 
 

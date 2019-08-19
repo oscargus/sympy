@@ -1610,17 +1610,15 @@ class Basic(with_metaclass(ManagedProperties)):
         if len(self.args) != len(expr.args):
             return None
 
+        from .relational import InvalidComparison
         d = repl_dict.copy()
         for arg, other_arg in zip(self.args, expr.args):
             if arg == other_arg:
                 continue
-            if arg.is_Relational:
-                try:
-                    d = arg.xreplace(d).matches(other_arg, d, old=old)
-                except TypeError:
-                    d = None
-            else:
+            try:
                 d = arg.xreplace(d).matches(other_arg, d, old=old)
+            except InvalidComparison:
+                d = None
             if d is None:
                 return None
         return d

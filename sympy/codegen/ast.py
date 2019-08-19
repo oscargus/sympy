@@ -131,7 +131,7 @@ from sympy.core.basic import Basic
 from sympy.core.compatibility import string_types
 from sympy.core.expr import Expr
 from sympy.core.numbers import Float, Integer, oo
-from sympy.core.relational import Lt, Le, Ge, Gt
+from sympy.core.relational import Lt, Le, Ge, Gt, InvalidComparison
 from sympy.core.sympify import _sympify, sympify, SympifyError
 from sympy.utilities.iterables import iterable
 
@@ -1487,7 +1487,7 @@ class Variable(Node):
         try:
             rhs = _sympify(rhs)
         except SympifyError:
-            raise TypeError("Invalid comparison %s < %s" % (self, rhs))
+            raise InvalidComparison("Invalid comparison %s < %s" % (self, rhs))
         return op(self, rhs, evaluate=False)
 
     __lt__ = lambda self, other: self._relation(other, Lt)
