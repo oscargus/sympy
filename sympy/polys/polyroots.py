@@ -898,7 +898,12 @@ def roots(f, *gens, **flags):
         if f.is_multivariate:
             raise PolynomialError('multivariate polynomials are not supported')
 
-    def _update_dict(result, currentroot, k):
+    def _update_dict(result, zeros, currentroot, k):
+        if currentroot == 0:
+            if 0 in zeros:
+                zeros[0] += k
+            else:
+                zeros[0] = k
         if currentroot in result:
             result[currentroot] += k
         else:
@@ -981,18 +986,18 @@ def roots(f, *gens, **flags):
         dom = f.get_domain()
         if not dom.is_Exact and dom.is_Numerical:
             for r in f.nroots():
-                _update_dict(result, r, 1)
+                _update_dict(result, zeros, r, 1)
         elif f.degree() == 1:
-            result[roots_linear(f)[0]] = 1
+            _update_dict(result, zeros, roots_linear(f)[0], 1)
         elif f.length() == 2:
             roots_fun = roots_quadratic if f.degree() == 2 else roots_binomial
             for r in roots_fun(f):
-                _update_dict(result, r, 1)
+                _update_dict(result, zeros, r, 1)
         else:
             _, factors = Poly(f.as_expr()).factor_list()
             if len(factors) == 1 and f.degree() == 2:
                 for r in roots_quadratic(f):
-                    _update_dict(result, r, 1)
+                    _update_dict(result, zeros, r, 1)
             else:
                 if len(factors) == 1 and factors[0][1] == 1:
                     if f.get_domain().is_EX:
@@ -1005,17 +1010,17 @@ def roots(f, *gens, **flags):
                             result = roots(f)
                             if not result:
                                 for currentroot in _try_decompose(f):
-                                    _update_dict(result, currentroot, 1)
+                                    _update_dict(result, zeros, currentroot, 1)
                         else:
                             for r in _try_heuristics(f):
-                                _update_dict(result, r, 1)
+                                _update_dict(result, zeros, r, 1)
                     else:
                         for currentroot in _try_decompose(f):
-                            _update_dict(result, currentroot, 1)
+                            _update_dict(result, zeros, currentroot, 1)
                 else:
                     for currentfactor, k in factors:
                         for r in _try_heuristics(Poly(currentfactor, f.gen, field=True)):
-                            _update_dict(result, r, k)
+                            _update_dict(result, zeros, r, k)
 
     if coeff is not S.One:
         _result, result, = result, {}

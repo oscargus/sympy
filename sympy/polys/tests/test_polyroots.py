@@ -678,3 +678,7 @@ def test_nroots2():
 
 def test_roots_composite():
     assert len(roots(Poly(y**3 + y**2*sqrt(x) + y + x, y, composite=True))) == 3
+
+
+def test_issue_17454():
+    assert roots([1, -3*(-4 - 4*I)**2/8 + 12*I, 0], multiple=True) == [0, 0]
