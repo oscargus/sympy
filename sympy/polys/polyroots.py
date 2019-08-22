@@ -305,7 +305,7 @@ def roots_quartic(f):
         return r1 + r2
     else:
         a2 = a**2
-        e = b - 3*a2/8
+        e = _mexpand(b - 3*a2/8)
         f = _mexpand(c + a*(a2/8 - b/2))
         g = _mexpand(d - a*(a*(3*a2/256 - b/16) + c/4))
         aon4 = a/4
@@ -323,23 +323,19 @@ def roots_quartic(f):
             if sols:
                 return sols
             # Ferrari method, see [1, 2]
-            a2 = a**2
-            e = b - 3*a2/8
-            f = c + a*(a2/8 - b/2)
-            g = d - a*(a*(3*a2/256 - b/16) + c/4)
-            p = -e**2/12 - g
-            q = -e**3/108 + e*g/3 - f**2/8
+            p = _mexpand(-e**2/12 - g)
+            q = _mexpand(-e**3/108 + e*g/3 - f**2/8)
             TH = Rational(1, 3)
 
             def _ans(y):
-                w = sqrt(e + 2*y)
-                arg1 = 3*e + 2*y
-                arg2 = 2*f/w
+                w = sqrt(_mexpand(e + 2*y))
+                arg1 = _mexpand(3*e + 2*y)
+                arg2 = _mexpand(2*f/w)
                 ans = []
                 for s in [-1, 1]:
                     root = sqrt(-(arg1 + s*arg2))
                     for t in [-1, 1]:
-                        ans.append((s*w - t*root)/2 - aon4)
+                        ans.append(_mexpand((s*w - t*root)/2 - aon4))
                 return ans
 
             # p == 0 case

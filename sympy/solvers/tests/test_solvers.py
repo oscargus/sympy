@@ -4,7 +4,7 @@ from sympy import (
     Wild, acos, asin, atan, atanh, cos, cosh, diff, erf, erfinv, erfc,
     erfcinv, exp, im, log, pi, re, sec, sin,
     sinh, solve, solve_linear, sqrt, sstr, symbols, sympify, tan, tanh,
-    root, simplify, atan2, arg, Mul, SparseMatrix, ask, Tuple, nsolve, oo,
+    root, atan2, arg, Mul, SparseMatrix, ask, Tuple, nsolve, oo,
     E, cbrt, denom, Add, Piecewise)
 
 from sympy.core.compatibility import range
@@ -2098,3 +2098,8 @@ def test_issue_17452():
     assert solve((7**x)**x + pi, x) == [-sqrt(log(pi) + I*pi)/sqrt(log(7)),
                                         sqrt(log(pi) + I*pi)/sqrt(log(7))]
     assert solve(x**(x/11) + pi/11, x) == [exp(LambertW(-11*log(11) + 11*log(pi) + 11*I*pi))]
+
+
+def test_issue_17454():
+    x = Symbol('x')
+    assert solve((1 - x - I)**4, x) == [1 - I]
