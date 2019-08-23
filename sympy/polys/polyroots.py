@@ -121,9 +121,9 @@ def roots_cubic(f, trig=False):
     """
     if trig:
         a, b, c, d = f.all_coeffs()
-        p = (3*a*c - b**2)/3/a**2
-        q = (2*b**3 - 9*a*b*c + 27*a**2*d)/(27*a**3)
-        D = 18*a*b*c*d - 4*b**3*d + b**2*c**2 - 4*a*c**3 - 27*a**2*d**2
+        p = _mexpand((3*a*c - b**2)/3/a**2)
+        q = _mexpand((2*b**3 - 9*a*b*c + 27*a**2*d)/(27*a**3))
+        D = _mexpand(18*a*b*c*d - 4*b**3*d + b**2*c**2 - 4*a*c**3 - 27*a**2*d**2)
         if (D > 0) == True:
             rv = []
             for k in range(3):
@@ -136,8 +136,8 @@ def roots_cubic(f, trig=False):
         x1, x2 = roots([1, a, b], multiple=True)
         return [x1, S.Zero, x2]
 
-    p = b - a**2/3
-    q = c - a*b/3 + 2*a**3/27
+    p = _mexpand(b - a**2/3)
+    q = _mexpand(c - a*b/3 + 2*a**3/27)
 
     pon3 = p/3
     aon3 = a/3
@@ -155,18 +155,18 @@ def roots_cubic(f, trig=False):
         y1, y2 = roots([1, 0, p], multiple=True)
         return [tmp - aon3 for tmp in [y1, S.Zero, y2]]
     elif q.is_real and q.is_negative:
-        u1 = -root(-q/2 + sqrt(q**2/4 + pon3**3), 3)
+        u1 = -root(-q/2 + sqrt(_mexpand(q**2/4 + pon3**3)), 3)
 
     coeff = I*sqrt(3)/2
     if u1 is None:
-        u1 = S(1)
+        u1 = S.One
         u2 = -S.Half + coeff
         u3 = -S.Half - coeff
-        a, b, c, d = S(1), a, b, c
-        D0 = b**2 - 3*a*c
-        D1 = 2*b**3 - 9*a*b*c + 27*a**2*d
-        C = root((D1 + sqrt(D1**2 - 4*D0**3))/2, 3)
-        return [-(b + uk*C + D0/C/uk)/3/a for uk in [u1, u2, u3]]
+        b, c, d = a, b, c  # a, b, c, d = S.One, a, b, c
+        D0 = _mexpand(b**2 - 3*c)  # b**2 - 3*a*c
+        D1 = _mexpand(2*b**3 - 9*b*c + 27*d)  # 2*b**3 - 9*a*b*c + 27*a**2*d
+        C = root((D1 + sqrt(_mexpand(D1**2 - 4*D0**3)))/2, 3)
+        return [_mexpand(-(b + uk*C + D0/C/uk)/3) for uk in [u1, u2, u3]]  # -(b + uk*C + D0/C/uk)/3/a
 
     u2 = u1*(-S.Half + coeff)
     u3 = u1*(-S.Half - coeff)
@@ -231,10 +231,10 @@ def _roots_quartic_euler(p, q, r, a):
         return None
     R = max(xsols)
     c1 = sqrt(R)
-    B = -q*c1/(4*R)
+    B = _mexpand(-q*c1/(4*R))
     A = -R - p/2
-    c2 = sqrt(A + B)
-    c3 = sqrt(A - B)
+    c2 = sqrt(_mexpand(A + B))
+    c3 = sqrt(_mexpand(A - B))
     return [c1 - c2 - a, -c1 - c3 - a, -c1 + c3 - a, c1 + c2 - a]
 
 
@@ -339,15 +339,15 @@ def roots_quartic(f):
                 return ans
 
             # p == 0 case
-            y1 = -5*e/6 - q**TH
+            y1 = _mexpand(-5*e/6 - q**TH)
             if p.is_zero:
                 return _ans(y1)
 
             # if p != 0 then u below is not 0
-            root = sqrt(q**2/4 + p**3/27)
+            root = sqrt(_mexpand(q**2/4 + p**3/27))
             r = -q/2 + root  # or -q/2 - root
             u = r**TH  # primary root of solve(x**3 - r, x)
-            y2 = -5*e/6 + u - p/u/3
+            y2 = _mexpand(-5*e/6 + u - p/u/3)
             if fuzzy_not(p.is_zero):
                 return _ans(y2)
 
@@ -538,12 +538,12 @@ def roots_quintic(f):
     disc_bar = alpha_bar**2 - 4*beta_bar
 
     l0 = quintic.l0(theta)
+    Stwo = S(2)
+    l1 = _quintic_simplify((-alpha + sqrt(disc)) / Stwo)
+    l4 = _quintic_simplify((-alpha - sqrt(disc)) / Stwo)
 
-    l1 = _quintic_simplify((-alpha + sqrt(disc)) / S(2))
-    l4 = _quintic_simplify((-alpha - sqrt(disc)) / S(2))
-
-    l2 = _quintic_simplify((-alpha_bar + sqrt(disc_bar)) / S(2))
-    l3 = _quintic_simplify((-alpha_bar - sqrt(disc_bar)) / S(2))
+    l2 = _quintic_simplify((-alpha_bar + sqrt(disc_bar)) / Stwo)
+    l3 = _quintic_simplify((-alpha_bar - sqrt(disc_bar)) / Stwo)
 
     order = quintic.order(theta, d)
     test = (order*delta.n()) - ( (l1.n() - l4.n())*(l2.n() - l3.n()) )
@@ -899,11 +899,11 @@ def roots(f, *gens, **flags):
             raise PolynomialError('multivariate polynomials are not supported')
 
     def _update_dict(result, zeros, currentroot, k):
-        if currentroot == 0:
-            if 0 in zeros:
-                zeros[0] += k
+        if currentroot == S.Zero:
+            if S.Zero in zeros:
+                zeros[S.Zero] += k
             else:
-                zeros[0] = k
+                zeros[S.Zero] = k
         if currentroot in result:
             result[currentroot] += k
         else:
@@ -932,7 +932,7 @@ def roots(f, *gens, **flags):
         if f.is_ground:
             return []
         if f.is_monomial:
-            return [S(0)]*f.degree()
+            return [S.Zero]*f.degree()
 
         if f.length() == 2:
             if f.degree() == 1:
@@ -970,7 +970,7 @@ def roots(f, *gens, **flags):
     if not k:
         zeros = {}
     else:
-        zeros = {S(0): k}
+        zeros = {S.Zero: k}
 
     coeff, f = preprocess_roots(f)
 
