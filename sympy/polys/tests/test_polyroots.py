@@ -78,7 +78,7 @@ def test_issue_8438():
     p = Poly([1, y, -2, -3], x).as_expr()
     roots = roots_cubic(Poly(p, x), x)
     z = -S(3)/2 - 7*I/2  # this will fail in code given in commit msg
-    post = [r.subs(y, z).expand() for r in roots]
+    post = [r.subs(y, z) for r in roots]
     assert set(post) == \
     set(roots_cubic(Poly(p.subs(y, z), x)))
     # /!\ if p is not made an expression, this is *very* slow
@@ -428,8 +428,8 @@ def test_roots0():
     x5 = -x3 - r1_2
     assert roots(x**3 + x**2 - x + 1, x, cubics=True) == {
         -x1 - x2 - r1_3: 1,
-        (-x1/x4 - x2*x4 - r1_3).expand(): 1,
-        (-x1/x5 - x2*x5 - r1_3).expand(): 1,
+        -x1/x4 - x2*x4 - r1_3: 1,
+        -x1/x5 - x2*x5 - r1_3: 1,
     }
 
     f = (x**2 + 2*x + 3).subs(x, 2*x**2 + 3*x).subs(x, 5*x - 4)

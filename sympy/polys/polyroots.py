@@ -121,13 +121,13 @@ def roots_cubic(f, trig=False):
     """
     if trig:
         a, b, c, d = f.all_coeffs()
-        p = _mexpand((3*a*c - b**2)/3/a**2)
-        q = _mexpand((2*b**3 - 9*a*b*c + 27*a**2*d)/(27*a**3))
-        D = _mexpand(18*a*b*c*d - 4*b**3*d + b**2*c**2 - 4*a*c**3 - 27*a**2*d**2)
+        p = (3*a*c - b**2)/(3*a**2)
+        q = (2*b**3 - 9*a*b*c + 27*a**2*d)/(27*a**3)
+        D = 18*a*b*c*d - 4*b**3*d + b**2*c**2 - 4*a*c**3 - 27*a**2*d**2
         if (D > 0) == True:
             rv = []
             for k in range(3):
-                rv.append(2*sqrt(-p/3)*cos(acos(3*q/2/p*sqrt(-3/p))/3 - k*2*pi/3))
+                rv.append(2*sqrt(-p/3)*cos((acos(3*q/2/p*sqrt(-3/p)) - k*2*pi)/3))
             return [i - b/3/a for i in rv]
 
     _, a, b, c = f.monic().all_coeffs()
@@ -136,8 +136,8 @@ def roots_cubic(f, trig=False):
         x1, x2 = roots([1, a, b], multiple=True)
         return [x1, S.Zero, x2]
 
-    p = _mexpand(b - a**2/3)
-    q = _mexpand(c - a*b/3 + 2*a**3/27)
+    p = b - a**2/3
+    q = c - a*b/3 + 2*a**3/27
 
     pon3 = p/3
     aon3 = a/3
@@ -155,7 +155,7 @@ def roots_cubic(f, trig=False):
         y1, y2 = roots([1, 0, p], multiple=True)
         return [tmp - aon3 for tmp in [y1, S.Zero, y2]]
     elif q.is_real and q.is_negative:
-        u1 = -root(-q/2 + sqrt(_mexpand(q**2/4 + pon3**3)), 3)
+        u1 = -root(-q/2 + sqrt(q**2/4 + pon3**3), 3)
 
     coeff = I*sqrt(3)/2
     if u1 is None:
@@ -163,10 +163,10 @@ def roots_cubic(f, trig=False):
         u2 = -S.Half + coeff
         u3 = -S.Half - coeff
         b, c, d = a, b, c  # a, b, c, d = S.One, a, b, c
-        D0 = _mexpand(b**2 - 3*c)  # b**2 - 3*a*c
-        D1 = _mexpand(2*b**3 - 9*b*c + 27*d)  # 2*b**3 - 9*a*b*c + 27*a**2*d
-        C = root((D1 + sqrt(_mexpand(D1**2 - 4*D0**3)))/2, 3)
-        return [_mexpand(-(b + uk*C + D0/C/uk)/3) for uk in [u1, u2, u3]]  # -(b + uk*C + D0/C/uk)/3/a
+        D0 = b**2 - 3*c  # b**2 - 3*a*c
+        D1 = 2*b**3 - 9*b*c + 27*d  # 2*b**3 - 9*a*b*c + 27*a**2*d
+        C = root((D1 + sqrt(D1**2 - 4*D0**3))/2, 3)
+        return [-(b + uk*C + D0/C/uk)/3 for uk in [u1, u2, u3]]  # -(b + uk*C + D0/C/uk)/3/a
 
     u2 = u1*(-S.Half + coeff)
     u3 = u1*(-S.Half - coeff)
@@ -231,10 +231,10 @@ def _roots_quartic_euler(p, q, r, a):
         return None
     R = max(xsols)
     c1 = sqrt(R)
-    B = _mexpand(-q*c1/(4*R))
+    B = -q*c1/(4*R)
     A = -R - p/2
-    c2 = sqrt(_mexpand(A + B))
-    c3 = sqrt(_mexpand(A - B))
+    c2 = sqrt(A + B)
+    c3 = sqrt(A - B)
     return [c1 - c2 - a, -c1 - c3 - a, -c1 + c3 - a, c1 + c2 - a]
 
 
@@ -305,16 +305,16 @@ def roots_quartic(f):
         return r1 + r2
     else:
         a2 = a**2
-        e = _mexpand(b - 3*a2/8)
+        e = b - 3*a2/8
         f = _mexpand(c + a*(a2/8 - b/2))
-        g = _mexpand(d - a*(a*(3*a2/256 - b/16) + c/4))
         aon4 = a/4
+        g = _mexpand(d - aon4*(a*(3*a2/64 - b/4) + c))
 
-        if f is S.Zero:
+        if f.is_zero:
             y1, y2 = [sqrt(tmp) for tmp in
                       roots([1, e, g], multiple=True)]
             return [tmp - aon4 for tmp in [-y1, -y2, y1, y2]]
-        if g is S.Zero:
+        if g.is_zero:
             y = [S.Zero] + roots([1, 0, e, f], multiple=True)
             return [tmp - aon4 for tmp in y]
         else:
@@ -323,37 +323,37 @@ def roots_quartic(f):
             if sols:
                 return sols
             # Ferrari method, see [1, 2]
-            p = _mexpand(-e**2/12 - g)
-            q = _mexpand(-e**3/108 + e*g/3 - f**2/8)
+            p = -e**2/12 - g
+            q = -e**3/108 + e*g/3 - f**2/8
             TH = Rational(1, 3)
 
             def _ans(y):
-                w = sqrt(_mexpand(e + 2*y))
-                arg1 = _mexpand(3*e + 2*y)
-                arg2 = _mexpand(2*f/w)
+                w = sqrt(e + 2*y)
+                arg1 = 3*e + 2*y
+                arg2 = 2*f/w
                 ans = []
                 for s in [-1, 1]:
                     root = sqrt(-(arg1 + s*arg2))
                     for t in [-1, 1]:
-                        ans.append(_mexpand((s*w - t*root)/2 - aon4))
+                        ans.append((s*w - t*root)/2 - aon4)
                 return ans
 
             # p == 0 case
-            y1 = _mexpand(-5*e/6 - q**TH)
+            y1 = -5*e/6 - q**TH
             if p.is_zero:
                 return _ans(y1)
 
             # if p != 0 then u below is not 0
-            root = sqrt(_mexpand(q**2/4 + p**3/27))
+            root = sqrt(q**2/4 + p**3/27)
             r = -q/2 + root  # or -q/2 - root
             u = r**TH  # primary root of solve(x**3 - r, x)
-            y2 = _mexpand(-5*e/6 + u - p/u/3)
+            y2 = -5*e/6 + u - p/u/3
             if fuzzy_not(p.is_zero):
                 return _ans(y2)
 
             # sort it out once they know the values of the coefficients
             return [Piecewise((a1, Eq(p, 0)), (a2, True))
-                for a1, a2 in zip(_ans(y1), _ans(y2))]
+                    for a1, a2 in zip(_ans(y1), _ans(y2))]
 
 
 def roots_binomial(f):

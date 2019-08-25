@@ -155,7 +155,7 @@ def test_CRootOf___eval_Eq__():
     eq = x**3 + x + 1
     sol = solve(eq)
     assert [Eq(rootof(eq, i), j) for i in range(3) for j in sol] == [
-        True, False, False, False, True, False, False, False, True]
+        False, False, True, False, True, False, True, False, False]
     assert Eq(rootof(eq, 0), 1 + S.ImaginaryUnit) == False
 
 
