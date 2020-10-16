@@ -9,7 +9,8 @@ from sympy import (Matrix, MatrixSymbol, S, Indexed, Basic, Tuple, Range,
                    linsolve, eye, Or, Not, Intersection, factorial, Contains,
                    Union, Expr, Function, exp, cacheit, sqrt, pi, gamma,
                    Ge, Piecewise, Symbol, NonSquareMatrixError, EmptySet,
-                   ceiling, MatrixBase, ConditionSet, ones, zeros, Identity)
+                   ceiling, MatrixBase, ConditionSet, ones, zeros, Identity,
+                   Rational, Lt, Gt, Ne, BlockMatrix)
 from sympy.core.relational import Relational
 from sympy.logic.boolalg import Boolean
 from sympy.utilities.exceptions import SymPyDeprecationWarning
@@ -515,25 +516,58 @@ class MarkovProcess(StochasticProcess):
             trans_probs = self.transition_probabilities(mat)
         elif isinstance(self, DiscreteMarkovChain):
             trans_probs = mat
-        condition=self.replace_with_index(condition)
-        given_condition=self.replace_with_index(given_condition)
-        new_given_condition=self.replace_with_index(new_given_condition)
+        condition = self.replace_with_index(condition)
+        given_condition = self.replace_with_index(given_condition)
+        new_given_condition = self.replace_with_index(new_given_condition)
 
         if isinstance(condition, Relational):
-            rv, states = (list(condition.atoms(RandomIndexedSymbol))[0], condition.as_set())
             if isinstance(new_given_condition, And):
                 gcs = new_given_condition.args
             else:
                 gcs = (new_given_condition, )
-            grvs = new_given_condition.atoms(RandomIndexedSymbol)
+            min_key_rv = list(new_given_condition.atoms(RandomIndexedSymbol))
+            rv = list(condition.atoms(RandomIndexedSymbol))
 
-            min_key_rv = None
-            for grv in grvs:
-                if grv.key <= rv.key:
-                    min_key_rv = grv
-            if min_key_rv == None:
+            if len(min_key_rv):
+                min_key_rv = min_key_rv[0]
+                for r in rv:
+                    if min_key_rv.key > r.key:
+                        return Probability(condition)
+            else:
+                min_key_rv = None
                 return Probability(condition)
 
+            if len(rv) > 1:
+                rv = rv[:2]
+                if rv[0].key < rv[1].key:
+                        rv[0], rv[1] = rv[1], rv[0]
+                s = Rational(0, 1)
+                n = len(self.state_space)
+
+                if isinstance(condition, Eq) or isinstance(condition, Ne):
+                    for i in range(0, n):
+                        s += self.probability(Eq(rv[0], i), Eq(rv[1], i)) * self.probability(Eq(rv[1], i), new_given_condition)
+                    return s if isinstance(condition, Eq) else 1 - s
+                else:
+                    upper = 0
+                    greater = False
+                    if isinstance(condition, Ge) or isinstance(condition, Lt):
+                        upper = 1
+                    if isinstance(condition, Gt) or isinstance(condition, Ge):
+                        greater = True
+
+                    for i in range(0, n):
+                        if i <= n//2:
+                            for j in range(0, i + upper):
+                                s += self.probability(Eq(rv[0], i), Eq(rv[1], j)) * self.probability(Eq(rv[1], j), new_given_condition)
+                        else:
+                            s += self.probability(Eq(rv[0], i), new_given_condition)
+                            for j in range(i + upper, n):
+                                s -= self.probability(Eq(rv[0], i), Eq(rv[1], j)) * self.probability(Eq(rv[1], j), new_given_condition)
+                    return s if greater else 1 - s
+
+            rv = rv[0]
+            states = condition.as_set()
             prob, gstate = dict(), None
             for gc in gcs:
                 if gc.has(min_key_rv):
@@ -756,6 +790,22 @@ class DiscreteMarkovChain(DiscreteTimeStochasticProcess, MarkovProcess):
     >>> E(Y[3], Eq(Y[1], cloudy))
     0.38*Cloudy + 0.36*Rainy + 0.26*Sunny
 
+    Probability of expressions with multiple RandomIndexedSymbols
+    can also be calculated provided there is only 1 RandomIndexedSymbol
+    in the given condition. It is always better to use Rational instead
+    of floating point numbers for the probabilities in the
+    transition matrix to avoid errors.
+
+    >>> from sympy import Gt, Le, Rational
+    >>> T = Matrix([[Rational(5, 10), Rational(3, 10), Rational(2, 10)], [Rational(2, 10), Rational(7, 10), Rational(1, 10)], [Rational(3, 10), Rational(3, 10), Rational(4, 10)]])
+    >>> Y = DiscreteMarkovChain("Y", [0, 1, 2], T)
+    >>> P(Eq(Y[3], Y[1]), Eq(Y[0], 0)).round(3)
+    0.409
+    >>> P(Gt(Y[3], Y[1]), Eq(Y[0], 0)).round(2)
+    0.36
+    >>> P(Le(Y[15], Y[10]), Eq(Y[8], 2)).round(7)
+    0.6963328
+
     There is limited support for arbitrarily sized states:
 
     >>> n = symbols('n', nonnegative=True, integer=True)
@@ -851,7 +901,7 @@ class DiscreteMarkovChain(DiscreteTimeStochasticProcess, MarkovProcess):
         Returns
         =======
 
-        classes : List of Tuple of List, Boolean, Intger
+        classes
             The ``classes`` are a list of tuples. Each
             tuple represents a single communication class
             with its properties. The first element in the
@@ -901,6 +951,9 @@ class DiscreteMarkovChain(DiscreteTimeStochasticProcess, MarkovProcess):
         """
         n = self.number_of_states
         T = self.transition_probabilities
+
+        if isinstance(T, MatrixSymbol):
+            raise NotImplementedError("Cannot perform the operation with a symbolic matrix.")
 
         # begin Tarjan's algorithm
         V = Range(n)
@@ -1111,6 +1164,205 @@ class DiscreteMarkovChain(DiscreteTimeStochasticProcess, MarkovProcess):
         distribution of a discrete Markov chain.
         """
         return self.fixed_row_vector()
+
+    def decompose(self) -> tTuple[tList[Basic], ImmutableMatrix, ImmutableMatrix, ImmutableMatrix]:
+        """
+        Decomposes the transition matrix into submatrices with
+        special properties.
+
+        The transition matrix can be decomposed into 4 submatrices:
+        - A - the submatrix from recurrent states to recurrent states.
+        - B - the submatrix from transient to recurrent states.
+        - C - the submatrix from transient to transient states.
+        - O - the submatrix of zeros for recurrent to transient states.
+
+        Returns
+        =======
+
+        states, A, B, C
+            ``states`` - a list of state names with the first being
+            the recurrent states and the last being
+            the transient states in the order
+            of the row names of A and then the row names of C.
+            ``A`` - the submatrix from recurrent states to recurrent states.
+            ``B`` - the submatrix from transient to recurrent states.
+            ``C`` - the submatrix from transient to transient states.
+
+        Examples
+        ========
+
+        >>> from sympy.stats import DiscreteMarkovChain
+        >>> from sympy import Matrix, S
+
+        One can decompose this chain for example:
+
+        >>> T = Matrix([[S(1)/2, S(1)/2, 0,      0,      0],
+        ...             [S(2)/5, S(1)/5, S(2)/5, 0,      0],
+        ...             [0,      0,      1,      0,      0],
+        ...             [0,      0,      S(1)/2, S(1)/2, 0],
+        ...             [S(1)/2, 0,      0,      0, S(1)/2]])
+        >>> X = DiscreteMarkovChain('X', trans_probs=T)
+        >>> states, A, B, C = X.decompose()
+        >>> states
+        [2, 0, 1, 3, 4]
+
+        >>> A   # recurrent to recurrent
+        Matrix([[1]])
+
+        >>> B  # transient to recurrent
+        Matrix([
+        [  0],
+        [2/5],
+        [1/2],
+        [  0]])
+
+        >>> C  # transient to transient
+        Matrix([
+        [1/2, 1/2,   0,   0],
+        [2/5, 1/5,   0,   0],
+        [  0,   0, 1/2,   0],
+        [1/2,   0,   0, 1/2]])
+
+        This means that state 2 is the only absorbing state
+        (since A is a 1x1 matrix). B is a 4x1 matrix since
+        the 4 remaining transient states all merge into reccurent
+        state 2. And C is the 4x4 matrix that shows how the
+        transient states 0, 1, 3, 4 all interact.
+
+        See Also
+        ========
+
+        sympy.stats.stochastic_process_types.DiscreteMarkovChain.communication_classes
+        sympy.stats.stochastic_process_types.DiscreteMarkovChain.canonical_form
+
+        References
+        ==========
+
+        .. [1] https://en.wikipedia.org/wiki/Absorbing_Markov_chain
+        .. [2] http://people.brandeis.edu/~igusa/Math56aS08/Math56a_S08_notes015.pdf
+        """
+        trans_probs = self.transition_probabilities
+
+        classes = self.communication_classes()
+        r_states = []
+        t_states = []
+
+        for states, recurrent, period in classes:
+            if recurrent:
+                r_states += states
+            else:
+                t_states += states
+
+        states = r_states + t_states
+        indexes = [self.index_of[state] for state in states]
+
+        A = Matrix(len(r_states), len(r_states),
+                   lambda i, j: trans_probs[indexes[i], indexes[j]])
+
+        B = Matrix(len(t_states), len(r_states),
+                   lambda i, j: trans_probs[indexes[len(r_states) + i], indexes[j]])
+
+        C = Matrix(len(t_states), len(t_states),
+                   lambda i, j: trans_probs[indexes[len(r_states) + i], indexes[len(r_states) + j]])
+
+        return states, A.as_immutable(), B.as_immutable(), C.as_immutable()
+
+    def canonical_form(self) -> tTuple[tList[Basic], ImmutableMatrix]:
+        """
+        Reorders the one-step transition matrix
+        so that recurrent states appear first and transient
+        states appear last. Other representations include inserting
+        transient states first and recurrent states last.
+
+        Returns
+        =======
+
+        states, P_new
+            ``states`` is the list that describes the order of the
+            new states in the matrix
+            so that the ith element in ``states`` is the state of the
+            ith row of A.
+            ``P_new`` is the new transition matrix in canonical form.
+
+        Examples
+        ========
+
+        >>> from sympy.stats import DiscreteMarkovChain
+        >>> from sympy import Matrix, S
+
+        You can convert your chain into canonical form:
+
+        >>> T = Matrix([[S(1)/2, S(1)/2, 0,      0,      0],
+        ...             [S(2)/5, S(1)/5, S(2)/5, 0,      0],
+        ...             [0,      0,      1,      0,      0],
+        ...             [0,      0,      S(1)/2, S(1)/2, 0],
+        ...             [S(1)/2, 0,      0,      0, S(1)/2]])
+        >>> X = DiscreteMarkovChain('X', list(range(1, 6)), trans_probs=T)
+        >>> states, new_matrix = X.canonical_form()
+        >>> states
+        [3, 1, 2, 4, 5]
+
+        >>> new_matrix
+        Matrix([
+        [  1,   0,   0,   0,   0],
+        [  0, 1/2, 1/2,   0,   0],
+        [2/5, 2/5, 1/5,   0,   0],
+        [1/2,   0,   0, 1/2,   0],
+        [  0, 1/2,   0,   0, 1/2]])
+
+        The new states are [3, 1, 2, 4, 5] and you can
+        create a new chain with this and its canonical
+        form will remain the same (since it is already
+        in canonical form).
+
+        >>> X = DiscreteMarkovChain('X', states, new_matrix)
+        >>> states, new_matrix = X.canonical_form()
+        >>> states
+        [3, 1, 2, 4, 5]
+
+        >>> new_matrix
+        Matrix([
+        [  1,   0,   0,   0,   0],
+        [  0, 1/2, 1/2,   0,   0],
+        [2/5, 2/5, 1/5,   0,   0],
+        [1/2,   0,   0, 1/2,   0],
+        [  0, 1/2,   0,   0, 1/2]])
+
+        This is not limited to absorbing chains:
+
+        >>> T = Matrix([[0, 5,  5, 0,  0],
+        ...             [0, 0,  0, 10, 0],
+        ...             [5, 0,  5, 0,  0],
+        ...             [0, 10, 0, 0,  0],
+        ...             [0, 3,  0, 3,  4]])/10
+        >>> X = DiscreteMarkovChain('X', trans_probs=T)
+        >>> states, new_matrix = X.canonical_form()
+        >>> states
+        [1, 3, 0, 2, 4]
+
+        >>> new_matrix
+        Matrix([
+        [   0,    1,   0,   0,   0],
+        [   1,    0,   0,   0,   0],
+        [ 1/2,    0,   0, 1/2,   0],
+        [   0,    0, 1/2, 1/2,   0],
+        [3/10, 3/10,   0,   0, 2/5]])
+
+        See Also
+        ========
+
+        sympy.stats.stochastic_process_types.DiscreteMarkovChain.communication_classes
+        sympy.stats.stochastic_process_types.DiscreteMarkovChain.decompose
+
+        References
+        ==========
+
+        .. [1] https://onlinelibrary.wiley.com/doi/pdf/10.1002/9780470316887.app1
+        .. [2] http://www.columbia.edu/~ww2040/6711F12/lect1023big.pdf
+        """
+        states, A, B, C = self.decompose()
+        O = zeros(A.shape[0], C.shape[1])
+        return states, BlockMatrix([[A, O], [B, C]]).as_explicit()
 
     def sample(self):
         """
