@@ -3154,6 +3154,16 @@ def test_sympy__matrices__expressions__fourier__IDFT():
     from sympy import S
     assert _test_args(IDFT(S(2)))
 
+def test_sympy__matrices__expressions__hilbert__HilbertMatrix():
+    from sympy.matrices.expressions.hilbert import HilbertMatrix
+    from sympy import S
+    assert _test_args(HilbertMatrix(S(2)))
+
+def test_sympy__matrices__expressions__hilbert__InverseHilbertMatrix():
+    from sympy.matrices.expressions.hilbert import InverseHilbertMatrix
+    from sympy import S
+    assert _test_args(InverseHilbertMatrix(S(2)))
+
 from sympy.matrices.expressions import MatrixSymbol
 X = MatrixSymbol('X', 10, 10)
 
