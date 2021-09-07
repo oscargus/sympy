@@ -91,7 +91,7 @@ class PygletPlot:
     1: parametric, cartesian, polar
     2: parametric, cartesian, cylindrical = polar, spherical
 
-    >>> Plot(1, mode='spherical')
+    >>> p = Plot(1, mode='spherical')
 
 
     Calculator-like Interface
@@ -169,7 +169,7 @@ class PygletPlot:
         ...is equivalent to...
 
         >>> p = Plot(visible=False)
-        >>> p[1] = x**2
+        >>> p[0] = x**2
 
         Note that in earlier versions of the plotting
         module, you were able to specify multiple
