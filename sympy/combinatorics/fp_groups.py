@@ -410,11 +410,7 @@ class FpGroup(DefaultPrinting):
         single = False
         if isinstance(perm_result, PermutationGroup):
             perm_result, single = [perm_result], True
-        result = []
-        for group in perm_result:
-            gens = group.generators
-            result.append(T.invert(gens))
-        return result[0] if single else result
+        return T.invert(perm_result[0].generators) if single else [T.invert(group.generators) for group in perm_result]
 
     def derived_series(self):
         '''

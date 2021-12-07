@@ -1197,15 +1197,12 @@ class DiagramGrid:
 
             # The diagram is disconnected.  Lay out the components
             # independently.
-            grids = []
 
             # Sort the components to eventually get the grids arranged
             # in a fixed, hash-independent order.
             components = sorted(components, key=default_sort_key)
 
-            for component in components:
-                grid = DiagramGrid(component, **hints)
-                grids.append(grid)
+            grids = [DiagramGrid(component, **hints) for component in components]
 
             # Throw the grids together, in a line.
             total_width = sum(g.width for g in grids)

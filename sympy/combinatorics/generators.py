@@ -157,10 +157,7 @@ def rubik(n):
     def cw(F, r=1):
         for _ in range(r):
             face = faces[F]
-            rv = []
-            for c in range(n):
-                for r in range(n - 1, -1, -1):
-                    rv.append(face[r, c])
+            rv = [face[r, c] for r in range(n - 1, -1, -1) for c in range(n)]
             faces[F] = Matrix(n, n, rv)
 
     def ccw(F):
@@ -222,12 +219,8 @@ def rubik(n):
 
     # the faces are represented by nxn matrices
     faces = {}
-    count = 0
     for fi in range(6):
-        f = []
-        for a in range(n**2):
-            f.append(count)
-            count += 1
+        f = list(range(fi*n**2, (fi+1)*n**2))
         faces[names[fi]] = Matrix(n, n, f)
 
     # this will either return the value of the current permutation

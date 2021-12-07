@@ -1135,8 +1135,7 @@ class Permutation(Atom):
         cyclic_form = []
         for i in range(len(array_form)):
             if unchecked[i]:
-                cycle = []
-                cycle.append(i)
+                cycle = [i]
                 unchecked[i] = False
                 j = i
                 while unchecked[array_form[j]]:

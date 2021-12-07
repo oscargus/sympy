@@ -173,11 +173,7 @@ class FreeGroup(DefaultPrinting):
         (x, y, z)
 
         """
-        gens = []
-        for sym in group.symbols:
-            elm = ((sym, 1),)
-            gens.append(group.dtype(elm))
-        return tuple(gens)
+        return tuple(group.dtype(((sym, 1),)) for sym in group.symbols)
 
     def clone(self, symbols=None):
         return self.__class__(symbols or self.symbols)
