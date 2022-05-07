@@ -70,7 +70,7 @@ class JavascriptCodePrinter(CodePrinter):
         return "%s;" % codestring
 
     def _get_comment(self, text):
-        return "// {}".format(text)
+        return f"// {text}"
 
     def _declare_number_const(self, name, value):
         return "var {} = {};".format(name, value.evalf(self._settings['precision']))
@@ -104,7 +104,7 @@ class JavascriptCodePrinter(CodePrinter):
         elif expr.exp == S.One/3:
             return 'Math.cbrt(%s)' % self._print(expr.base)
         else:
-            return 'Math.pow(%s, %s)' % (self._print(expr.base),
+            return 'Math.pow({}, {})'.format(self._print(expr.base),
                                  self._print(expr.exp))
 
     def _print_Rational(self, expr):
@@ -114,7 +114,7 @@ class JavascriptCodePrinter(CodePrinter):
     def _print_Mod(self, expr):
         num, den = expr.args
         PREC = precedence(expr)
-        snum, sden = [self.parenthesize(arg, PREC) for arg in expr.args]
+        snum, sden = (self.parenthesize(arg, PREC) for arg in expr.args)
         # % is remainder (same sign as numerator), not modulo (same sign as
         # denominator), in js. Hence, % only works as modulo if both numbers
         # have the same sign
@@ -127,7 +127,7 @@ class JavascriptCodePrinter(CodePrinter):
         lhs_code = self._print(expr.lhs)
         rhs_code = self._print(expr.rhs)
         op = expr.rel_op
-        return "{} {} {}".format(lhs_code, op, rhs_code)
+        return f"{lhs_code} {op} {rhs_code}"
 
     def _print_Indexed(self, expr):
         # calculate index for 1d array
@@ -137,7 +137,7 @@ class JavascriptCodePrinter(CodePrinter):
         for i in reversed(range(expr.rank)):
             elem += expr.indices[i]*offset
             offset *= dims[i]
-        return "%s[%s]" % (self._print(expr.base.label), self._print(elem))
+        return f"{self._print(expr.base.label)}[{self._print(elem)}]"
 
     def _print_Idx(self, expr):
         return self._print(expr.label)
@@ -182,7 +182,7 @@ class JavascriptCodePrinter(CodePrinter):
             # operators. This has the downside that inline operators will
             # not work for statements that span multiple lines (Matrix or
             # Indexed expressions).
-            ecpairs = ["((%s) ? (\n%s\n)\n" % (self._print(c), self._print(e))
+            ecpairs = [f"(({self._print(c)}) ? (\n{self._print(e)}\n)\n"
                     for e, c in expr.args[:-1]]
             last_line = ": (\n%s\n)" % self._print(expr.args[-1].expr)
             return ": ".join(ecpairs) + last_line + " ".join([")"*len(ecpairs)])
@@ -216,7 +216,7 @@ class JavascriptCodePrinter(CodePrinter):
                 pretty.append(line)
                 continue
             level -= decrease[n]
-            pretty.append("%s%s" % (tab*level, line))
+            pretty.append(f"{tab*level}{line}")
             level += increase[n]
         return pretty
 

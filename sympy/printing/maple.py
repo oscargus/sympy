@@ -108,7 +108,7 @@ class MapleCodePrinter(CodePrinter):
         return "%s;" % codestring
 
     def _get_comment(self, text):
-        return "# {}".format(text)
+        return f"# {text}"
 
     def _declare_number_const(self, name, value):
         return "{} := {};".format(name,
@@ -126,7 +126,7 @@ class MapleCodePrinter(CodePrinter):
     def _print_Assignment(self, expr):
         lhs = self._print(expr.lhs)
         rhs = self._print(expr.rhs)
-        return "{lhs} := {rhs}".format(lhs=lhs, rhs=rhs)
+        return f"{lhs} := {rhs}"
 
     def _print_Pow(self, expr, **kwargs):
         PREC = precedence(expr)
@@ -156,11 +156,11 @@ class MapleCodePrinter(CodePrinter):
                 e=self._print(e)))
             for e, c in expr.args]
         _inbrace = ', '.join(_coup_list)
-        return 'piecewise({_inbrace})'.format(_inbrace=_inbrace)
+        return f'piecewise({_inbrace})'
 
     def _print_Rational(self, expr):
         p, q = int(expr.p), int(expr.q)
-        return "{p}/{q}".format(p=str(p), q=str(q))
+        return f"{str(p)}/{str(q)}"
 
     def _print_Relational(self, expr):
         PREC=precedence(expr)
@@ -169,7 +169,7 @@ class MapleCodePrinter(CodePrinter):
         op = expr.rel_op
         if op in spec_relational_ops:
             op = spec_relational_ops[op]
-        return "{lhs} {rel_op} {rhs}".format(lhs=lhs_code, rel_op=op, rhs=rhs_code)
+        return f"{lhs_code} {op} {rhs_code}"
 
     def _print_NumberSymbol(self, expr):
         return number_symbols[expr]
@@ -221,7 +221,7 @@ class MapleCodePrinter(CodePrinter):
         if isinstance(expr.rows, (Integer, IntegerConstant)):
             return self._print(sympy.SparseMatrix(expr))
         else:
-            return "Matrix({var_size}, shape = identity)".format(var_size=self._print(expr.rows))
+            return f"Matrix({self._print(expr.rows)}, shape = identity)"
 
     def _print_MatMul(self, expr):
         PREC=precedence(expr)
@@ -238,7 +238,7 @@ class MapleCodePrinter(CodePrinter):
 
     def _print_MatPow(self, expr):
         # This function requires LinearAlgebra Function in Maple
-        return 'MatrixPower({A}, {n})'.format(A=self._print(expr.base), n=self._print(expr.exp))
+        return f'MatrixPower({self._print(expr.base)}, {self._print(expr.exp)})'
 
     def _print_HadamardProduct(self, expr):
         PREC = precedence(expr)
@@ -252,8 +252,8 @@ class MapleCodePrinter(CodePrinter):
             _second_arg = '{var}${order}'.format(var=self._print(_var),
                                                  order=self._print(_order))
         else:
-            _second_arg = '{var}'.format(var=self._print(_var))
-        return 'diff({func_expr}, {sec_arg})'.format(func_expr=self._print(_f), sec_arg=_second_arg)
+            _second_arg = f'{self._print(_var)}'
+        return f'diff({self._print(_f)}, {_second_arg})'
 
 
 def maple_code(expr, assign_to=None, **settings):

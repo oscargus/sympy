@@ -32,7 +32,7 @@ def _run_pyglet(fname, fmt):
     try:
         img = image.load(fname)
     except ImageDecodeException:
-        raise ValueError("pyglet preview does not work for '{}' files.".format(fmt))
+        raise ValueError(f"pyglet preview does not work for '{fmt}' files.")
 
     offset = 25
 

@@ -70,10 +70,10 @@ class GLSLPrinter(CodePrinter):
         return "%s;" % codestring
 
     def _get_comment(self, text):
-        return "// {}".format(text)
+        return f"// {text}"
 
     def _declare_number_const(self, name, value):
-        return "float {} = {};".format(name, value)
+        return f"float {name} = {value};"
 
     def _format_code(self, lines):
         return self.indent_code(lines)
@@ -101,7 +101,7 @@ class GLSLPrinter(CodePrinter):
                 pretty.append(line)
                 continue
             level -= decrease[n]
-            pretty.append("%s%s" % (tab*level, line))
+            pretty.append(f"{tab*level}{line}")
             level += increase[n]
         return pretty
 
@@ -114,7 +114,7 @@ class GLSLPrinter(CodePrinter):
         glsl_types = self._settings['glsl_types']
         array_type = self._settings['array_type']
         array_size = A.cols*A.rows
-        array_constructor = "{}[{}]".format(array_type, array_size)
+        array_constructor = f"{array_type}[{array_size}]"
 
         if A.cols == 1:
             return self._print(A[0]);
@@ -176,21 +176,21 @@ class GLSLPrinter(CodePrinter):
             i,j = expr.i,expr.j
         pnt = self._print(expr.parent)
         if glsl_types and ((rows <= 4 and cols <=4) or nest):
-            return "{}[{}][{}]".format(pnt, i, j)
+            return f"{pnt}[{i}][{j}]"
         else:
-            return "{}[{}]".format(pnt, i + j*rows)
+            return f"{pnt}[{i + j*rows}]"
 
     def _print_list(self, expr):
         l = ', '.join(self._print(item) for item in expr)
         glsl_types = self._settings['glsl_types']
         array_type = self._settings['array_type']
         array_size = len(expr)
-        array_constructor = '{}[{}]'.format(array_type, array_size)
+        array_constructor = f'{array_type}[{array_size}]'
 
         if array_size <= 4 and glsl_types:
-            return 'vec{}({})'.format(array_size, l)
+            return f'vec{array_size}({l})'
         else:
-            return '{}({})'.format(array_constructor, l)
+            return f'{array_constructor}({l})'
 
     _print_tuple = _print_list
     _print_Tuple = _print_list
@@ -257,7 +257,7 @@ class GLSLPrinter(CodePrinter):
             # operators. This has the downside that inline operators will
             # not work for statements that span multiple lines (Matrix or
             # Indexed expressions).
-            ecpairs = ["((%s) ? (\n%s\n)\n" % (self._print(c),
+            ecpairs = ["(({}) ? (\n{}\n)\n".format(self._print(c),
                                                self._print(e))
                     for e, c in expr.args[:-1]]
             last_line = ": (\n%s\n)" % self._print(expr.args[-1].expr)
@@ -299,13 +299,13 @@ class GLSLPrinter(CodePrinter):
         return str(float(expr))
 
     def _print_Rational(self, expr):
-        return "{}.0/{}.0".format(expr.p, expr.q)
+        return f"{expr.p}.0/{expr.q}.0"
 
     def _print_Relational(self, expr):
         lhs_code = self._print(expr.lhs)
         rhs_code = self._print(expr.rhs)
         op = expr.rel_op
-        return "{} {} {}".format(lhs_code, op, rhs_code)
+        return f"{lhs_code} {op} {rhs_code}"
 
     def _print_Add(self, expr, order=None):
         if self._settings['use_operators']:

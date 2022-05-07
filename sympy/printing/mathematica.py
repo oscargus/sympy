@@ -153,7 +153,7 @@ class MCodePrinter(CodePrinter):
 
     def _print_Pow(self, expr):
         PREC = precedence(expr)
-        return '%s^%s' % (self.parenthesize(expr.base, PREC),
+        return '{}^{}'.format(self.parenthesize(expr.base, PREC),
                           self.parenthesize(expr.exp, PREC))
 
     def _print_Mul(self, expr):
@@ -169,7 +169,7 @@ class MCodePrinter(CodePrinter):
         lhs_code = self._print(expr.lhs)
         rhs_code = self._print(expr.rhs)
         op = expr.rel_op
-        return "{} {} {}".format(lhs_code, op, rhs_code)
+        return f"{lhs_code} {op} {rhs_code}"
 
     # Primitive numbers
     def _print_Zero(self, expr):
@@ -247,7 +247,7 @@ class MCodePrinter(CodePrinter):
         def print_dims():
             return self.doprint(expr.shape)
 
-        return 'SparseArray[{}, {}]'.format(print_data(), print_dims())
+        return f'SparseArray[{print_data()}, {print_dims()}]'
 
     def _print_ImmutableDenseNDimArray(self, expr):
         return self.doprint(expr.tolist())
@@ -267,7 +267,7 @@ class MCodePrinter(CodePrinter):
 
         def print_rule(pos, val):
             """Helper function to print a rule of Mathematica"""
-            return '{} -> {}'.format(self.doprint(pos), self.doprint(val))
+            return f'{self.doprint(pos)} -> {self.doprint(val)}'
 
         def print_data():
             """Helper function to print data part of Mathematica
@@ -296,14 +296,14 @@ class MCodePrinter(CodePrinter):
             """
             return self.doprint(expr.shape)
 
-        return 'SparseArray[{}, {}]'.format(print_data(), print_dims())
+        return f'SparseArray[{print_data()}, {print_dims()}]'
 
     def _print_Function(self, expr):
         if expr.func.__name__ in self.known_functions:
             cond_mfunc = self.known_functions[expr.func.__name__]
             for cond, mfunc in cond_mfunc:
                 if cond(*expr.args):
-                    return "%s[%s]" % (mfunc, self.stringify(expr.args, ", "))
+                    return "{}[{}]".format(mfunc, self.stringify(expr.args, ", "))
         elif expr.func.__name__ in self._rewriteable_functions:
             # Simple rewrite to supported function possible
             target_f, required_fs = self._rewriteable_functions[expr.func.__name__]
@@ -315,7 +315,7 @@ class MCodePrinter(CodePrinter):
 
     def _print_LambertW(self, expr):
         if len(expr.args) == 1:
-            return "ProductLog[{}]".format(self._print(expr.args[0]))
+            return f"ProductLog[{self._print(expr.args[0])}]"
         return "ProductLog[{}, {}]".format(
             self._print(expr.args[1]), self._print(expr.args[0]))
 
@@ -336,7 +336,7 @@ class MCodePrinter(CodePrinter):
 
 
     def _get_comment(self, text):
-        return "(* {} *)".format(text)
+        return f"(* {text} *)"
 
 
 def mathematica_code(expr, **settings):

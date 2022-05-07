@@ -172,10 +172,10 @@ class FCodePrinter(CodePrinter):
         return codestring
 
     def _get_comment(self, text):
-        return "! {}".format(text)
+        return f"! {text}"
 
     def _declare_number_const(self, name, value):
-        return "parameter ({} = {})".format(name, self._print(value))
+        return f"parameter ({name} = {self._print(value)})"
 
     def _print_NumberSymbol(self, expr):
         # A Number symbol that is not implemented here or with _printmethod
@@ -197,7 +197,7 @@ class FCodePrinter(CodePrinter):
             # fortran arrays start at 1 and end at dimension
             var, start, stop = map(self._print,
                     [i.label, i.lower + 1, i.upper + 1])
-            open_lines.append("do %s = %s, %s" % (var, start, stop))
+            open_lines.append(f"do {var} = {start}, {stop}")
             close_lines.append("end do")
         return open_lines, close_lines
 
@@ -285,13 +285,13 @@ class FCodePrinter(CodePrinter):
                 if precedence(term) < PREC:
                     t = "(%s)" % t
 
-                return "cmplx(%s,%s) %s %s" % (
+                return "cmplx({},{}) {} {}".format(
                     self._print(Add(*pure_real)),
                     self._print(-S.ImaginaryUnit*Add(*pure_imaginary)),
                     sign, t,
                 )
             else:
-                return "cmplx(%s,%s)" % (
+                return "cmplx({},{})".format(
                     self._print(Add(*pure_real)),
                     self._print(-S.ImaginaryUnit*Add(*pure_imaginary)),
                 )
@@ -319,7 +319,7 @@ class FCodePrinter(CodePrinter):
             raise NotImplementedError(msg)
         else:
             x, y = expr.args
-            return "      modulo({}, {})".format(self._print(x), self._print(y))
+            return f"      modulo({self._print(x)}, {self._print(y)})"
 
     def _print_ImaginaryUnit(self, expr):
         # purpose: print complex numbers nicely in Fortran.
@@ -340,7 +340,7 @@ class FCodePrinter(CodePrinter):
     def _print_Pow(self, expr):
         PREC = precedence(expr)
         if expr.exp == -1:
-            return '%s/%s' % (
+            return '{}/{}'.format(
                 self._print(literal_dp(1)),
                 self.parenthesize(expr.base, PREC)
             )
@@ -364,7 +364,7 @@ class FCodePrinter(CodePrinter):
         printed = CodePrinter._print_Float(self, expr)
         e = printed.find('e')
         if e > -1:
-            return "%sd%s" % (printed[:e], printed[e + 1:])
+            return f"{printed[:e]}d{printed[e + 1:]}"
         return "%sd0" % printed
 
     def _print_Relational(self, expr):
@@ -372,11 +372,11 @@ class FCodePrinter(CodePrinter):
         rhs_code = self._print(expr.rhs)
         op = expr.rel_op
         op = op if op not in self._relationals else self._relationals[op]
-        return "{} {} {}".format(lhs_code, op, rhs_code)
+        return f"{lhs_code} {op} {rhs_code}"
 
     def _print_Indexed(self, expr):
         inds = [ self._print(i) for i in expr.indices ]
-        return "%s(%s)" % (self._print(expr.base.label), ", ".join(inds))
+        return "{}({})".format(self._print(expr.base.label), ", ".join(inds))
 
     def _print_Idx(self, expr):
         return self._print(expr.label)
@@ -394,7 +394,7 @@ class FCodePrinter(CodePrinter):
             params += ', ' + self._print(sm.dim)
         if sm.mask != None: # Must use '!= None', cannot use 'is not None'
             params += ', mask=' + self._print(sm.mask)
-        return '%s(%s)' % (sm.__class__.__name__.rstrip('_'), params)
+        return '{}({})'.format(sm.__class__.__name__.rstrip('_'), params)
 
     def _print_product_(self, prod):
         return self._print_sum_(prod)
@@ -556,7 +556,7 @@ class FCodePrinter(CodePrinter):
                             pos = 66
                         hunk = line[:pos]
                         line = line[pos:].lstrip()
-                        result.append("%s%s" % (self._lead['comment'], hunk))
+                        result.append("{}{}".format(self._lead['comment'], hunk))
                 else:
                     result.append(line)
             elif line.startswith(self._lead['code']):
@@ -573,7 +573,7 @@ class FCodePrinter(CodePrinter):
                     line = line[pos:].lstrip()
                     if line:
                         hunk += trailing
-                    result.append("%s%s" % (self._lead['cont'], hunk))
+                    result.append("{}{}".format(self._lead['cont'], hunk))
             else:
                 result.append(line)
         return result
@@ -612,7 +612,7 @@ class FCodePrinter(CodePrinter):
             else:
                 padding = " "*level*tabwidth
 
-            line = "%s%s" % (padding, line)
+            line = f"{padding}{line}"
             if not free:
                 line = self._pad_leading_columns([line])[0]
 
@@ -709,7 +709,7 @@ class FCodePrinter(CodePrinter):
         )
 
     def _print_FunctionPrototype(self, fp):
-        entity = "{} function ".format(self._print(fp.return_type))
+        entity = f"{self._print(fp.return_type)} function "
         return (
             "interface\n"
             "{function_head}\n"
@@ -725,7 +725,7 @@ class FCodePrinter(CodePrinter):
         else:
             prefix = ''
 
-        entity = "{} function ".format(self._print(fd.return_type))
+        entity = f"{self._print(fd.return_type)} function "
         with printer_context(self, result_name=fd.name):
             return (
                 "{prefix}{function_head}\n"

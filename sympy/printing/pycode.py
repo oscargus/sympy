@@ -103,7 +103,7 @@ class AbstractPythonCodePrinter(CodePrinter):
         std = self._settings['standard']
         if std is None:
             import sys
-            std = 'python{}'.format(sys.version_info.major)
+            std = f'python{sys.version_info.major}'
         if std != 'python3':
             raise ValueError('Only Python 3 is supported.')
         self.standard = std
@@ -117,7 +117,7 @@ class AbstractPythonCodePrinter(CodePrinter):
             'user_constants', {}))
 
     def _declare_number_const(self, name, value):
-        return "%s = %s" % (name, value)
+        return f"{name} = {value}"
 
     def _module_format(self, fqn, register=True):
         parts = fqn.split('.')
@@ -133,10 +133,10 @@ class AbstractPythonCodePrinter(CodePrinter):
         return lines
 
     def _get_statement(self, codestring):
-        return "{}".format(codestring)
+        return f"{codestring}"
 
     def _get_comment(self, text):
-        return "  # {}".format(text)
+        return f"  # {text}"
 
     def _expand_fold_binary_op(self, op, args):
         """
@@ -155,7 +155,7 @@ class AbstractPythonCodePrinter(CodePrinter):
         if len(args) == 1:
             return self._print(args[0])
         else:
-            return "%s(%s, %s)" % (
+            return "{}({}, {})".format(
                 self._module_format(op),
                 self._expand_fold_binary_op(op, args[:-1]),
                 self._print(args[-1]),
@@ -180,7 +180,7 @@ class AbstractPythonCodePrinter(CodePrinter):
         else:
             N = len(args)
             Nhalf = N // 2
-            return "%s(%s, %s)" % (
+            return "{}({}, {})".format(
                 self._module_format(op),
                 self._expand_reduce_binary_op(args[:Nhalf]),
                 self._expand_reduce_binary_op(args[Nhalf:]),
@@ -238,7 +238,7 @@ class AbstractPythonCodePrinter(CodePrinter):
         if expr.rel_op in op:
             lhs = self._print(expr.lhs)
             rhs = self._print(expr.rhs)
-            return '({lhs} {op} {rhs})'.format(op=expr.rel_op, lhs=lhs, rhs=rhs)
+            return f'({lhs} {expr.rel_op} {rhs})'
         return super()._print_Relational(expr)
 
     def _print_ITE(self, expr):
@@ -270,7 +270,7 @@ class AbstractPythonCodePrinter(CodePrinter):
     def _print_MatrixBase(self, expr):
         name = expr.__class__.__name__
         func = self.known_functions.get(name, name)
-        return "%s(%s)" % (func, self._print(expr.tolist()))
+        return f"{func}({self._print(expr.tolist())})"
 
     _print_SparseRepMatrix = \
         _print_MutableSparseMatrix = \
@@ -301,7 +301,7 @@ class AbstractPythonCodePrinter(CodePrinter):
         )
 
     def _print_Declaration(self, decl):
-        return '%s = %s' % (
+        return '{} = {}'.format(
             self._print(decl.variable.symbol),
             self._print(decl.variable.value)
         )
@@ -375,7 +375,7 @@ class AbstractPythonCodePrinter(CodePrinter):
         if expr.exp == S.Half and not rational:
             func = self._module_format(sqrt)
             arg = self._print(expr.base)
-            return '{func}({arg})'.format(func=func, arg=arg)
+            return f'{func}({arg})'
 
         if expr.is_commutative:
             if -expr.exp is S.Half and not rational:
@@ -387,7 +387,7 @@ class AbstractPythonCodePrinter(CodePrinter):
 
         base_str = self.parenthesize(expr.base, PREC, strict=False)
         exp_str = self.parenthesize(expr.exp, PREC, strict=False)
-        return "{}**{}".format(base_str, exp_str)
+        return f"{base_str}**{exp_str}"
 
 
 class ArrayPrinter:
@@ -444,7 +444,7 @@ class ArrayPrinter:
     def _print_ArrayTensorProduct(self, expr):
         letters = self._get_letter_generator_for_einsum()
         contraction_string = ",".join(["".join([next(letters) for j in range(i)]) for i in expr.subranks])
-        return '%s("%s", %s)' % (
+        return '{}("{}", {})'.format(
                 self._module_format(self._module + "." + self._einsum),
                 contraction_string,
                 ", ".join([self._print(arg) for arg in expr.args])
@@ -470,7 +470,7 @@ class ArrayPrinter:
             elems = ",".join(["%s" % (self._print(arg)) for arg in base.args])
         else:
             elems = self._print(base)
-        return "%s(\"%s\", %s)" % (
+        return "{}(\"{}\", {})".format(
             self._module_format(self._module + "." + self._einsum),
             "{}->{}".format(contraction_string, "".join(sorted(letters_free))),
             elems,
@@ -487,14 +487,14 @@ class ArrayPrinter:
             elems = [expr.expr]
         diagonal_string, letters_free, letters_dum = self._get_einsum_string(subranks, diagonal_indices)
         elems = [self._print(i) for i in elems]
-        return '%s("%s", %s)' % (
+        return '{}("{}", {})'.format(
             self._module_format(self._module + "." + self._einsum),
             "{}->{}".format(diagonal_string, "".join(letters_free+letters_dum)),
             ", ".join(elems)
         )
 
     def _print_PermuteDims(self, expr):
-        return "%s(%s, %s)" % (
+        return "{}({}, {})".format(
             self._module_format(self._module + "." + self._transpose),
             self._print(expr.expr),
             self._print(expr.permutation.array_form),
@@ -504,13 +504,13 @@ class ArrayPrinter:
         return self._expand_fold_binary_op(self._module + "." + self._add, expr.args)
 
     def _print_OneArray(self, expr):
-        return "%s((%s,))" % (
+        return "{}(({},))".format(
             self._module_format(self._module+ "." + self._ones),
             ','.join(map(self._print,expr.args))
         )
 
     def _print_ZeroArray(self, expr):
-        return "%s((%s,))" % (
+        return "{}(({},))".format(
             self._module_format(self._module+ "." + self._zeros),
             ','.join(map(self._print,expr.args))
         )
@@ -520,7 +520,7 @@ class ArrayPrinter:
         #doprint?
         lhs = self._print(self._arrayify(expr.lhs))
         rhs = self._print(self._arrayify(expr.rhs))
-        return "%s = %s" % ( lhs, rhs )
+        return f"{lhs} = {rhs}"
 
     def _print_IndexedBase(self, expr):
         return self._print_ArraySymbol(expr)
@@ -545,7 +545,7 @@ class PythonCodePrinter(AbstractPythonCodePrinter):
         return self._hprint_Pow(expr, rational=rational)
 
     def _print_Rational(self, expr):
-        return '{}/{}'.format(expr.p, expr.q)
+        return f'{expr.p}/{expr.q}'
 
     def _print_Half(self, expr):
         return self._print_Rational(expr)
@@ -735,7 +735,7 @@ class SymPyPrinter(AbstractPythonCodePrinter):
 
     def _print_Function(self, expr):
         mod = expr.func.__module__ or ''
-        return '%s(%s)' % (self._module_format(mod + ('.' if mod else '') + expr.func.__name__),
+        return '{}({})'.format(self._module_format(mod + ('.' if mod else '') + expr.func.__name__),
                            ', '.join(map(lambda arg: self._print(arg), expr.args)))
 
     def _print_Pow(self, expr, rational=False):

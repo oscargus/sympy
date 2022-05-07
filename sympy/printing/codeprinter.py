@@ -124,7 +124,7 @@ class CodePrinter(StrPrinter):
                 return sympify(expr)
             if isinstance(assign_to, (list, tuple)):
                 if len(expr) != len(assign_to):
-                    raise ValueError('Failed to assign an expression of length {} to {} variables'.format(len(expr), len(assign_to)))
+                    raise ValueError(f'Failed to assign an expression of length {len(expr)} to {len(assign_to)} variables')
                 return CodeBlock(*[_handle_assign_to(lhs, rhs) for lhs, rhs in zip(expr, assign_to)])
             if isinstance(assign_to, str):
                 if expr.is_Matrix:
@@ -154,7 +154,7 @@ class CodePrinter(StrPrinter):
             frontlines = []
             if self._not_supported:
                 frontlines.append(self._get_comment(
-                        "Not supported in {}:".format(self.language)))
+                        f"Not supported in {self.language}:"))
                 for expr in sorted(self._not_supported, key=str):
                     frontlines.append(self._get_comment(type(expr).__name__))
             for name, value in sorted(self._number_symbols, key=str):
@@ -200,7 +200,7 @@ class CodePrinter(StrPrinter):
         if text != lhs_printed:
             lines.extend(openloop)
             if assign_to is not None:
-                text = self._get_statement("%s = %s" % (lhs_printed, text))
+                text = self._get_statement(f"{lhs_printed} = {text}")
             lines.append(text)
             lines.extend(closeloop)
 
@@ -241,7 +241,7 @@ class CodePrinter(StrPrinter):
 
                         lines.extend(openloop)
                         lines.extend(openloop_d)
-                        text = "%s = %s" % (lhs_printed, StrPrinter.doprint(
+                        text = "{} = {}".format(lhs_printed, StrPrinter.doprint(
                             self, assign_to + term))
                         lines.append(self._get_statement(text))
                         lines.extend(closeloop_d)
@@ -376,7 +376,7 @@ class CodePrinter(StrPrinter):
         else:
             lhs_code = self._print(lhs)
             rhs_code = self._print(rhs)
-            return self._get_statement("%s = %s" % (lhs_code, rhs_code))
+            return self._get_statement(f"{lhs_code} = {rhs_code}")
 
     def _print_AugmentedAssignment(self, expr):
         lhs_code = self._print(expr.lhs)
@@ -386,7 +386,7 @@ class CodePrinter(StrPrinter):
                  [lhs_code, expr.op, rhs_code])))
 
     def _print_FunctionCall(self, expr):
-        return '%s(%s)' % (
+        return '{}({})'.format(
             expr.name,
             ', '.join(map(lambda arg: self._print(arg),
                           expr.function_args)))
@@ -410,7 +410,7 @@ class CodePrinter(StrPrinter):
     def _can_print(self, name):
         """ Check if function ``name`` is either a known function or has its own
             printing method. Used to check if rewriting is possible."""
-        return name in self.known_functions or getattr(self, '_print_{}'.format(name), False)
+        return name in self.known_functions or getattr(self, f'_print_{name}', False)
 
     def _print_Function(self, expr):
         if expr.func.__name__ in self.known_functions:
@@ -426,7 +426,7 @@ class CodePrinter(StrPrinter):
                 try:
                     return func(*[self.parenthesize(item, 0) for item in expr.args])
                 except TypeError:
-                    return "%s(%s)" % (func, self.stringify(expr.args, ", "))
+                    return "{}({})".format(func, self.stringify(expr.args, ", "))
         elif hasattr(expr, '_imp_') and isinstance(expr._imp_, Lambda):
             # inlined function
             return self._print(expr._imp_(*expr.args))
@@ -436,7 +436,7 @@ class CodePrinter(StrPrinter):
             if self._can_print(target_f) and all(self._can_print(f) for f in required_fs):
                 return self._print(expr.rewrite(target_f))
         if expr.is_Function and self._settings.get('allow_unknown_functions', False):
-            return '%s(%s)' % (self._print(expr.func), ', '.join(map(self._print, expr.args)))
+            return '{}({})'.format(self._print(expr.func), ', '.join(map(self._print, expr.args)))
         else:
             return self._print_not_supported(expr)
 
